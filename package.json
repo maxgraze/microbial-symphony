@@ -9,16 +9,23 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "d3": "^7.8.5",
+    "d3-voronoi-map": "^2.1.1",
+    "d3-voronoi-treemap": "^1.1.2",
+    "next": "14.0.3",
     "react": "^18",
     "react-dom": "^18",
-    "next": "14.0.3"
+    "sass": "^1.69.5",
+    "tone": "^14.7.77"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@types/d3": "^7.4.3",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
-    "eslint-config-next": "14.0.3"
+    "eslint-config-next": "14.0.3",
+    "typescript": "^5",
+    "use-resize-observer": "^9.1.0"
   }
 }
