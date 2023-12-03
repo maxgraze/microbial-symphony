@@ -1,11 +1,22 @@
 "use client";
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useState, useContext } from "react";
 import { csv } from "d3";
 
 import * as Tone from "tone";
+import { PlayerContext } from "../page";
+const limiter = new Tone.Compressor(-3, 20).toDestination();
 
 class Player {
-  constructor(synth, notes) {
+  synth: any;
+  notes: any;
+  index: number;
+  timeoutId: null;
+  getRandomNote: any;
+  getRandomRelease: any;
+  constructor(
+    synth: Tone.Synth<Tone.SynthOptions> | Tone.FMSynth,
+    notes: string[]
+  ) {
     this.synth = synth;
     this.notes = notes;
     this.index = 0;
@@ -19,7 +30,7 @@ class Player {
     this.timeoutId = setTimeout(
       () => this.playNoteRandom(releaseMin, releaseMax, delay),
       delay
-    );
+    ) as NodeJS.Timeout;
   }
 
   playNoteSequence(delay = 500, release = "8n") {
@@ -33,21 +44,25 @@ class Player {
   }
 
   stop() {
-    clearTimeout(this.timeoutId);
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+    }
   }
 
-  getRandomNote() {
-    return this.notes[Math.floor(Math.random() * this.notes.length)];
-  }
+  // getRandomNote() {
+  //   return this.notes[Math.floor(Math.random() * this.notes.length)];
+  // }
 
-  getRandomRelease(min, max) {
-    return Math.random() * (max - min) + min;
-  }
+  // getRandomRelease(releaseMin: number, releaseMax: number) {
+  //   return Math.random() * (releaseMax - releaseMin) + releaseMin;
+  // }
 }
-
 const Sonification = () => {
+  const { players, setPlayers } = useContext(PlayerContext);
+
   const [isLoaded, setLoaded] = useState(false);
-  const [players, setPlayers] = useState({});
+  const [selectedSynths, setSelectedSynths] = useState({});
+  const [synths, setSynths] = useState({});
   const [data, setData] = useState({});
 
   useEffect(() => {
@@ -68,12 +83,11 @@ const Sonification = () => {
       })
       .catch((error) => console.log(error));
   }, []);
-  useEffect(() => {
-    console.log(data);
 
+  useEffect(() => {
     let scaleNotes = ["E3", "G3", "A3", "B3", "D4", "E4"]; // E minor pentatonic scale
-    let LAB_notes = ["C4", "D4"]; // LAB notes
-    let yeast_notes = ["E4", "G4"]; // Changed to E and G in the 4th octave
+    let LAB_notes = ["C4", "D4"];
+    let yeast_notes = ["E4", "G4"];
 
     let mold = new Player(
       new Tone.Synth().connect(
@@ -81,7 +95,7 @@ const Sonification = () => {
       ),
       scaleNotes
     );
-    let AAB = new Player(
+    let acetic_acid_bacteria = new Player(
       new Tone.Synth({
         oscillator: { type: "triangle" },
         envelope: { attack: 0, decay: 0, sustain: 0.2, release: 0.8 },
@@ -92,15 +106,18 @@ const Sonification = () => {
       new Tone.Synth().connect(new Tone.Reverb(1).toDestination()),
       LAB_notes
     );
-    let yeast_synth = new Tone.Synth({
-      oscillator: { type: "sine" }, // Changed to a sine wave oscillator
-      envelope: { attack: 0.1, decay: 0.2, sustain: 0.5, release: 1.5 }, // Adjusted the envelope
-    });
+    let yeast = new Player(
+      new Tone.Synth({
+        oscillator: { type: "sine" }, // Changed to a sine wave oscillator
+        envelope: { attack: 0.1, decay: 0.2, sustain: 0.5, release: 1.5 }, // Adjusted the envelope
+      }).connect(limiter),
+      yeast_notes
+    );
 
     // Chain the synth with the limiter
     // yeast_synth.chain(limiter, Tone.Destination);
 
-    let yeast = new Player(yeast_synth, yeast_notes);
+    // let yeast = new Player(yeast_synth, yeast_notes);
 
     class BacilliPlayer extends Player {
       playNoteSequence(delay = 500) {
@@ -145,17 +162,60 @@ const Sonification = () => {
     // bacilli_synth.connect(new Tone.PingPongDelay("8n", 0.7).toDestination());
     // let bacilli = new Player(bacilli_synth, scaleNotes);
 
-    setPlayers({ lactic_acid_bacteria, mold, yeast });
+    setSynths({
+      lactic_acid_bacteria,
+      mold,
+      yeast,
+      acetic_acid_bacteria,
+      bacilli,
+    });
+
+    // setSelectedSynths({ mold });
+
     setLoaded(true);
-  }, []);
+
+    // let selected = players
+    //   ? players.reduce((obj, player) => {
+    //       let key = player.replace(/ /g, "_");
+    //       if (synths[key]) {
+    //         obj[key] = synths[key];
+    //       }
+    //       return obj;
+    //     }, {})
+    //   : "";
+    // setSelectedSynths(selected);
+  }, [data]);
+
+  // Object.values(
+  //   players.reduce((obj, player) => {
+  //     let key = player.replace(/ /g, "_");
+  //     if (synths[key]) {
+  //       obj[key] = synths[key];
+  //     }
+  //     return obj;
+  //   }, {})
+  // ).forEach((player) => player.playNoteSequence());
 
   const onStartClick = () => {
     Tone.start();
-    Object.values(players).forEach((player) => player.playNoteSequence());
+    // Object.values(selectedSynths).forEach((d) => d.playNoteSequence());
+    if (players) {
+      console.log(players);
+      let organismSynths = players.map((player) => {
+        return synths[player.replace(/ /g, "_")];
+      });
+      organismSynths.forEach((d) => {
+        return d.playNoteSequence();
+      });
+    }
   };
 
   const onStopClick = () => {
-    Object.values(players).forEach((player) => player.stop());
+    if (players) {
+      players.forEach((player) => {
+        synths[player.replace(/ /g, "_")].stop();
+      });
+    }
   };
 
   return (

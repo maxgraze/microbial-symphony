@@ -2,6 +2,7 @@ import React, { use, useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { fills } from "../lib/styles/fills";
 import { voronoiTreemap } from "d3-voronoi-treemap";
+import { PlayerContext } from "../page";
 
 interface VoronoiProps {
   data: any[];
@@ -14,13 +15,15 @@ const Voronoi: React.FC<VoronoiProps> = ({ data, key, circlePolygon }) => {
   const ref = useRef<SVGSVGElement | null>(null);
   const margin = { top: 10, right: 10, bottom: 10, left: 10 };
 
+  const { players, setPlayers } = React.useContext(PlayerContext);
+
   useEffect(() => {
     if (ref.current) {
       // Clear the SVG in case this effect runs multiple times
       d3.select(ref.current).selectAll("*").remove();
       const svg = d3.select(ref.current);
       const { width, height } = svg.node().getBoundingClientRect();
-      console.log(data);
+      // console.log(data);
       const voronoi = svg
         .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -62,7 +65,7 @@ const Voronoi: React.FC<VoronoiProps> = ({ data, key, circlePolygon }) => {
         .attr("d", (d) => "M" + d.polygon.join("L") + "Z")
         .attr("fill", "ivory");
 
-      voronoi
+      const nodes = voronoi
         .selectAll(".foreground-path")
         .data(allNodes)
         .join("path")
@@ -78,11 +81,48 @@ const Voronoi: React.FC<VoronoiProps> = ({ data, key, circlePolygon }) => {
           } else if (d.data.type && d.data.type == "other") return "grey";
           else return "yellow";
         })
-        .attr("class", "path")
-        .attr("stroke-width", (d) => 5 - d.depth * 2)
-        .attr("pointer-events", (d) => (d.depth === 1 ? "all" : "none"))
-        // .on("mousemove", mouseOver)
-        // .on("mouseout", mouseOut)
+        .attr("stroke-width", (d) => 5 - d.depth * 2);
+
+      nodes
+        .on("click", (event, d) => {
+          return setPlayers(
+            d.data.children
+              .filter((child) => child.type !== "other")
+              .map((child) => child.type.replace(/ /g, "_"))
+          );
+        })
+        // .on("mouseover", (event, d) => {
+        //   // const title = key.charAt(0).toUpperCase() + key.slice(1);
+        //   const el = event.currentTarget,
+        //     elParent = el.parentNode;
+        //   update &&
+        //     update({
+        //       x: event.x / 2 + 10,
+        //       y: event.y / 2 - 100,
+        //       data: {
+        //         id: d.properties && d.properties.NAME,
+        //         text: xFormat(d.data.impressions),
+        //         parentId: title,
+        //       },
+        //     });
+        //   d3.select(el)
+        //     .attr("class", "selected")
+        //     .raise()
+        //     .style("stroke-width", 2)
+        //     .style("opacity", 0.75);
+        //   d3.select(elParent);
+        //   d3.selectAll(".unselected").attr("fill", "#ccc");
+        // })
+        // .on("mouseleave", (event) => {
+        //   update && update();
+        //   const el = event.currentTarget;
+        //   d3.select(el)
+        //     .style("stroke", "#FFF")
+        //     .attr("class", "unselected")
+        //     .style("stroke-width", 0.5)
+        //     .style("opacity", 1);
+        //   d3.selectAll(".unselected").attr("fill", selectedFill);
+        // })
         .transition()
         .duration(1000);
       //   });

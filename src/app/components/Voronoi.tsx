@@ -1,9 +1,10 @@
-import React, { use, useEffect, useRef } from "react";
+import React, { useContext, useEffect, useRef } from "react";
+("use client");
 import * as d3 from "d3";
 import { fills } from "../lib/styles/fills";
 import { voronoiTreemap } from "d3-voronoi-treemap";
 import { circularPolygon } from "../lib/utils";
-
+import { PlayerContext } from "../page";
 interface VoronoiProps {
   data: any[];
   height: number;
@@ -12,6 +13,9 @@ interface VoronoiProps {
 const Voronoi: React.FC<VoronoiProps> = ({ data, height, width }) => {
   const ref = useRef<SVGSVGElement | null>(null);
 
+  const { player, setPlayer } = React.useContext(PlayerContext);
+
+  console.log(player);
   useEffect(() => {
     if (ref.current) {
       // Clear the SVG in case this effect runs multiple times

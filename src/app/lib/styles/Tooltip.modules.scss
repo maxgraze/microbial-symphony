@@ -1,0 +1,40 @@
+.tooltipContainer {
+  position: absolute;
+  z-index: 1000;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 10px 15px;
+  pointer-events: none;
+  transition: 0.3s;
+  color: #000;
+  border-radius: 2px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+  min-width: 130px;
+  transform: translate(-50%, -120%);
+  width: max-content;
+}
+.block {
+  stroke: #fff;
+}
+.textBlock {
+  fill: #000;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.text {
+  font-size: var(--s);
+}
+
+.emphasis {
+  font-weight: bold;
+  font-size: var(--xxl);
+}
+.smallEmphasis {
+  font-weight: bold;
+  font-size: var(--m);
+}
+
+.metricName {
+  text-transform: uppercase;
+}

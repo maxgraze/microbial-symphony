@@ -6,10 +6,11 @@ import styles from "../lib/styles/VoronoiWrapper.module.scss";
 import * as d3 from "d3";
 import VoronoiCircles from "./VoronoiCircles";
 import { circularPolygon } from "../lib/utils";
+import Tooltip from "./Tooltip";
 
 const VoronoiWrapper = () => {
   const svgRef = useRef<SVGSVGElement | null>(null);
-
+  const [tooltip, setTooltip] = useState();
   //   const { ref, width } = useResizeObserver();
   const [data, setData] = useState(null);
 
@@ -45,6 +46,7 @@ const VoronoiWrapper = () => {
       {data &&
         data.map((data, i) => (
           <div key={i} className={styles.voronoiCell}>
+            {/* <Tooltip config={tooltip} /> */}
             <VoronoiCircles data={data} key={i} circlePolygon={circlePolygon} />
           </div>
         ))}
