@@ -15,7 +15,6 @@ const Voronoi: React.FC<VoronoiProps> = ({ data, height, width }) => {
 
   const { player, setPlayer } = React.useContext(PlayerContext);
 
-  console.log(player);
   useEffect(() => {
     if (ref.current) {
       // Clear the SVG in case this effect runs multiple times

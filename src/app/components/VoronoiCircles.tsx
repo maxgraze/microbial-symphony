@@ -1,8 +1,10 @@
-import React, { use, useEffect, useRef } from "react";
+"use client";
+import React, { use, useContext, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { fills } from "../lib/styles/fills";
 import { voronoiTreemap } from "d3-voronoi-treemap";
 import { PlayerContext } from "../page";
+import * as Tone from "tone";
 
 interface VoronoiProps {
   data: any[];
@@ -15,7 +17,48 @@ const Voronoi: React.FC<VoronoiProps> = ({ data, key, circlePolygon }) => {
   const ref = useRef<SVGSVGElement | null>(null);
   const margin = { top: 10, right: 10, bottom: 10, left: 10 };
 
-  const { players, setPlayers } = React.useContext(PlayerContext);
+  const { players, setPlayers } = useContext(PlayerContext);
+  const [organisms, setOrganisms] = useState([]);
+
+  const playingSynths = useRef([]);
+
+  const stopAllSynths = () => {
+    playingSynths.current.forEach((player) => {
+      player.stopNoteSequence();
+    });
+    playingSynths.current.length = 0;
+  };
+  // const stopAllSynths = () => {
+  //   playingSynths.current.forEach((player) => {
+  //     player.stopNoteSequence();
+  //   });
+  //   playingSynths.current.length = 0;
+  // };
+  const onStartClick = (d) => {
+    if (typeof window !== "undefined") {
+      console.log(d);
+      Tone.start();
+      // Tone.Transport.start();
+      if (organisms.length === 0) {
+        const newOrganisms = d.data.children
+          .filter((child) => child.type !== "other")
+          .map((child) => child.type.replace(/ /g, "_"));
+
+        setOrganisms(newOrganisms);
+        let organismSynths = newOrganisms.map((organism) => {
+          return players[organism.replace(/ /g, "_")];
+        });
+        organismSynths.forEach((synth) => {
+          playingSynths.current.push(synth);
+          synth.playNoteSequence();
+        });
+        console.log(organismSynths);
+      } else {
+        setOrganisms([]);
+        stopAllSynths();
+      }
+    }
+  };
 
   useEffect(() => {
     if (ref.current) {
@@ -84,13 +127,15 @@ const Voronoi: React.FC<VoronoiProps> = ({ data, key, circlePolygon }) => {
         .attr("stroke-width", (d) => 5 - d.depth * 2);
 
       nodes
-        .on("click", (event, d) => {
-          return setPlayers(
-            d.data.children
-              .filter((child) => child.type !== "other")
-              .map((child) => child.type.replace(/ /g, "_"))
-          );
-        })
+        .on("mouseover", (event, d) => onStartClick(d)) // nodes
+        .on("mouseleave", (event, d) => stopAllSynths(d)) // nodes
+        //   .on("click", (event, d) => {
+        //     return setPlayers(
+        //       d.data.children
+        //         .filter((child) => child.type !== "other")
+        //         .map((child) => child.type.replace(/ /g, "_"))
+        //     );
+        //   })
         // .on("mouseover", (event, d) => {
         //   // const title = key.charAt(0).toUpperCase() + key.slice(1);
         //   const el = event.currentTarget,

@@ -1,52 +1,83 @@
 "use client";
-import { useEffect, useCallback, useState, useContext } from "react";
+import { useEffect, useState, useContext } from "react";
 import { csv } from "d3";
 
 import * as Tone from "tone";
 import { PlayerContext } from "../page";
-const limiter = new Tone.Compressor(-3, 20).toDestination();
 
+let compressor = new Tone.Compressor(-30, 3).toDestination();
 class Player {
   synth: any;
   notes: any;
   index: number;
   timeoutId: null;
   getRandomNote: any;
-  getRandomRelease: any;
   constructor(
     synth: Tone.Synth<Tone.SynthOptions> | Tone.FMSynth,
-    notes: string[]
+    notes: string[],
+    release = "0.2"
   ) {
     this.synth = synth;
     this.notes = notes;
     this.index = 0;
     this.timeoutId = null;
+    this.release = release;
+  }
+
+  getRandomRelease() {
+    return this.release;
   }
 
   playNoteRandom(releaseMin = 0.2, releaseMax = 0.5, delay = 500) {
     let note = this.getRandomNote();
-    let release = this.getRandomRelease(releaseMin, releaseMax);
+    let release = Math.random() * (releaseMax - releaseMin) + releaseMin;
     this.synth.triggerAttackRelease(note, release);
     this.timeoutId = setTimeout(
       () => this.playNoteRandom(releaseMin, releaseMax, delay),
       delay
-    ) as NodeJS.Timeout;
+    );
+  }
+  // playNoteRandom(releaseMin = 0.2, releaseMax = 0.5, delay = 500) {
+  //   let note = this.getRandomNote();
+  //   let release = this.getRandomRelease(releaseMin, releaseMax);
+  //   this.synth.triggerAttackRelease(note, release);
+  //   this.timeoutId = setTimeout(
+  //     () => this.playNoteRandom(releaseMin, releaseMax, delay),
+  //     delay
+  //   ) as NodeJS.Timeout;
+  // }
+
+  // playNoteSequence(delay = 500, release = "8n") {
+  //   // Clear any previously scheduled events
+  //   Tone.Transport.cancel();
+
+  //   // Schedule each note in the sequence
+  //   this.notes.forEach((note, index) => {
+  //     Tone.Transport.schedule((time) => {
+  //       this.synth.triggerAttackRelease(note, "1n", time);
+  //     }, `${index}m`); // 'm' stands for measures. This schedules each note to play one measure after the previous note.
+  //   });
+  //   Tone.Transport.start();
+  // }
+
+  playNoteSequence(delay = 500) {
+    let note = this.notes[this.index];
+    this.synth.triggerAttackRelease(note, "1n"); // '1n' specifies a note duration of 1 beat
+    this.index = (this.index + 1) % this.notes.length;
+    this.timeoutId = setTimeout(() => this.playNoteSequence(delay), delay);
   }
 
-  playNoteSequence(delay = 500, release = "8n") {
-    let note = this.notes[this.index];
-    this.synth.triggerAttackRelease(note, release);
-    this.index = (this.index + 1) % this.notes.length;
-    this.timeoutId = setTimeout(
-      () => this.playNoteSequence(delay, release),
-      delay
-    );
+  stopNoteSequence() {
+    this.synth.triggerRelease();
+
+    clearTimeout(this.timeoutId);
   }
 
   stop() {
     if (this.timeoutId) {
       clearTimeout(this.timeoutId);
     }
+    this.synth.dispose();
   }
 
   // getRandomNote() {
@@ -61,7 +92,6 @@ const Sonification = () => {
   const { players, setPlayers } = useContext(PlayerContext);
 
   const [isLoaded, setLoaded] = useState(false);
-  const [selectedSynths, setSelectedSynths] = useState({});
   const [synths, setSynths] = useState({});
   const [data, setData] = useState({});
 
@@ -91,7 +121,7 @@ const Sonification = () => {
 
     let mold = new Player(
       new Tone.Synth().connect(
-        new Tone.PingPongDelay("8n", 0.7).toDestination()
+        new Tone.PingPongDelay("8n", 0.7).chain(compressor)
       ),
       scaleNotes
     );
@@ -99,23 +129,43 @@ const Sonification = () => {
       new Tone.Synth({
         oscillator: { type: "triangle" },
         envelope: { attack: 0, decay: 0, sustain: 0.2, release: 0.8 },
-      }).toDestination(),
+        volume: -15,
+      }).chain(compressor),
       scaleNotes
     );
     let LAB = new Player(
-      new Tone.Synth().connect(new Tone.Reverb(1).toDestination()),
+      new Tone.Synth().connect(new Tone.Reverb(1).chain(compressor)),
       LAB_notes
     );
-    let yeast = new Player(
-      new Tone.Synth({
-        oscillator: { type: "sine" }, // Changed to a sine wave oscillator
-        envelope: { attack: 0.1, decay: 0.2, sustain: 0.5, release: 1.5 }, // Adjusted the envelope
-      }).connect(limiter),
-      yeast_notes
+    // let yeast_synth = new Tone.Synth({
+    //   oscillator: { type: "sine" },
+    //   envelope: { attack: 0.001, decay: 0.2, sustain: 0.1, release: 0.1 },
+    //   volume: -5,
+    // }).chain(
+    //   new Tone.Filter({
+    //     type: "highpass",
+    //     frequency: 1400,
+    //   }),
+    //   compressor
+    // );
+
+    let yeast_synth = new Tone.Synth({
+      //   oscillator: { type: "sine" },
+
+      envelope: {
+        attack: 0.001,
+        decay: 0.1,
+        release: 0.01,
+      },
+    }).chain(
+      new Tone.Filter({
+        type: "highpass",
+        frequency: 1400,
+      }),
+      compressor
     );
 
-    // Chain the synth with the limiter
-    // yeast_synth.chain(limiter, Tone.Destination);
+    let yeast = new Player(yeast_synth, ["E4", "G4"]);
 
     // let yeast = new Player(yeast_synth, yeast_notes);
 
@@ -136,15 +186,29 @@ const Sonification = () => {
         release: 1.5,
       },
       modulationIndex: 1,
-    }).toDestination();
+    }).chain(compressor);
 
     let bacilli = new BacilliPlayer(bacilli_synth, ["C4"]);
-    let lactic_acid_bacteria_synth = new Tone.Synth().toDestination();
+    // let lactic_acid_bacteria_synth = new Tone.Synth()
+    //   .chain(
+    //     new Tone.Filter({
+    //       type: "lowpass",
+    //       frequency: 800,
+    //     })
+    //   )
+    //   .chain(compressor);
+    // let lactic_acid_bacteria_notes = ["C3", "D3"];
+    // let lactic_acid_bacteria = new Player(
+    //   lactic_acid_bacteria_synth,
+    //   lactic_acid_bacteria_notes
+    // );
 
-    let lactic_acid_bacteria = new Player(lactic_acid_bacteria_synth, [
-      "C3",
-      "D3",
-    ]);
+    let LAB_synth = new Tone.Synth({
+      oscillator: {
+        type: "sine",
+      },
+    }).toDestination();
+    let lactic_acid_bacteria = new Player(LAB_synth, ["C3"], "0.1");
 
     // let bacilli_synth = new Tone.FMSynth({
     //   modulationIndex: 12.22,
@@ -162,13 +226,20 @@ const Sonification = () => {
     // bacilli_synth.connect(new Tone.PingPongDelay("8n", 0.7).toDestination());
     // let bacilli = new Player(bacilli_synth, scaleNotes);
 
-    setSynths({
+    setPlayers({
       lactic_acid_bacteria,
       mold,
       yeast,
       acetic_acid_bacteria,
       bacilli,
     });
+    // setSynths({
+    //   lactic_acid_bacteria,
+    //   mold,
+    //   yeast,
+    //   acetic_acid_bacteria,
+    //   bacilli,
+    // });
 
     // setSelectedSynths({ mold });
 
@@ -196,38 +267,28 @@ const Sonification = () => {
   //   }, {})
   // ).forEach((player) => player.playNoteSequence());
 
-  const onStartClick = () => {
-    Tone.start();
-    // Object.values(selectedSynths).forEach((d) => d.playNoteSequence());
-    if (players) {
-      console.log(players);
-      let organismSynths = players.map((player) => {
-        return synths[player.replace(/ /g, "_")];
-      });
-      organismSynths.forEach((d) => {
-        return d.playNoteSequence();
-      });
-    }
-  };
+  // const onStartClick = () => {
+  //   Tone.start();
+  //   // Object.values(selectedSynths).forEach((d) => d.playNoteSequence());
+  //   if (players) {
+  //     let organismSynths = players.map((player) => {
+  //       return synths[player.replace(/ /g, "_")];
+  //     });
+  //     organismSynths.forEach((d) => {
+  //       return d.playNoteSequence();
+  //     });
+  //   }
+  // };
 
-  const onStopClick = () => {
-    if (players) {
-      players.forEach((player) => {
-        synths[player.replace(/ /g, "_")].stop();
-      });
-    }
-  };
+  // const onStopClick = () => {
+  //   if (players) {
+  //     players.forEach((player) => {
+  //       synths[player.replace(/ /g, "_")].stop();
+  //     });
+  //   }
+  // };
 
-  return (
-    <div>
-      <button disabled={!isLoaded} onClick={onStartClick}>
-        Start
-      </button>
-      <button disabled={!isLoaded} onClick={onStopClick}>
-        Stop
-      </button>
-    </div>
-  );
+  return <></>;
 };
 
 //const [players, setPlayers] = useState({});
