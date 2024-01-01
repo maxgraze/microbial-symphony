@@ -3,7 +3,7 @@ import { useEffect, useState, useContext } from "react";
 import { csv } from "d3";
 
 import * as Tone from "tone";
-import { PlayerContext } from "../page";
+import { PlayerContext } from "../lib/utils";
 
 let compressor = new Tone.Compressor(-30, 3).toDestination();
 class Player {

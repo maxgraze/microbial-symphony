@@ -3,7 +3,7 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { fills } from "../lib/styles/fills";
 import { voronoiTreemap } from "d3-voronoi-treemap";
-import { PlayerContext } from "../page";
+import { PlayerContext } from "../lib/utils";
 import * as Tone from "tone";
 
 interface VoronoiProps {

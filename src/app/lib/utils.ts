@@ -1,3 +1,14 @@
+import { createContext } from "react";
+
+interface PlayerContextType {
+  players: any;
+  setPlayers: React.Dispatch<React.SetStateAction<any>>;
+}
+
+export const PlayerContext = createContext<PlayerContextType | undefined>(
+  undefined
+);
+
 export function nFormatter(num: number, digits?: number) {
   if (!num) return "0";
   const lookup = [

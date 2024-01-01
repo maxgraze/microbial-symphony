@@ -4,20 +4,17 @@ import "./page.module.css";
 // import Sonification from "./components/Sonification";
 import { createContext, useEffect, useState } from "react";
 import VoronoiCircles from "./components/VoronoiCircles";
-import { FermentData, circularPolygon, legendData } from "./lib/utils";
+import {
+  FermentData,
+  circularPolygon,
+  legendData,
+  PlayerContext,
+} from "./lib/utils";
 import dynamic from "next/dynamic";
 
 const Sonification = dynamic(() => import("./components/Sonification"), {
   ssr: false,
 });
-interface PlayerContextType {
-  players: any;
-  setPlayers: React.Dispatch<React.SetStateAction<any>>;
-}
-
-export const PlayerContext = createContext<PlayerContextType | undefined>(
-  undefined
-);
 
 export default function Home() {
   const [players, setPlayers] = useState<any>({});
