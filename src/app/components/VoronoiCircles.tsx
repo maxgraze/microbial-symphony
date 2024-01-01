@@ -1,5 +1,5 @@
 "use client";
-import React, { use, useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { fills } from "../lib/styles/fills";
 import { voronoiTreemap } from "d3-voronoi-treemap";
@@ -7,69 +7,84 @@ import { PlayerContext } from "../page";
 import * as Tone from "tone";
 
 interface VoronoiProps {
-  data: any[];
-  height: number;
-  width: number;
+  data: any;
   circlePolygon: any;
-  key: number;
+  legend?: boolean;
 }
-const Voronoi: React.FC<VoronoiProps> = ({ data, key, circlePolygon }) => {
-  const ref = useRef<SVGSVGElement | null>(null);
-  const margin = { top: 10, right: 10, bottom: 10, left: 10 };
 
-  const { players, setPlayers } = useContext(PlayerContext);
+interface VoronoiNode extends d3.HierarchyNode<any> {
+  polygon: [number, number][];
+}
+
+type child = { type: string };
+const Voronoi: React.FC<VoronoiProps> = ({ data, circlePolygon, legend }) => {
+  const ref = useRef<SVGSVGElement | null>(null);
+
+  const players = useContext(PlayerContext)?.players;
+  const setPlayers = useContext(PlayerContext)?.setPlayers;
+
   const [organisms, setOrganisms] = useState([]);
 
-  const playingSynths = useRef([]);
+  const playingSynths = useRef<any[]>([]);
 
-  const stopAllSynths = () => {
+  const [playersLoaded, setPlayersLoaded] = useState(false); // New state for checking if players is loaded
+
+  useEffect(() => {
+    if (players && Object.keys(players).length > 0) {
+      setPlayersLoaded(true); // Set playersLoaded to true when players is populated
+    }
+  }, [players]); // This effect runs every time `players` changes
+
+  const stopAllSynths = (d: VoronoiNode) => {
     playingSynths.current.forEach((player) => {
       player.stopNoteSequence();
     });
     playingSynths.current.length = 0;
   };
-  // const stopAllSynths = () => {
-  //   playingSynths.current.forEach((player) => {
-  //     player.stopNoteSequence();
-  //   });
-  //   playingSynths.current.length = 0;
-  // };
-  const onStartClick = (d) => {
+
+  const onStartClick = (d: VoronoiNode) => {
+    if (!playersLoaded) {
+      return;
+    }
     if (typeof window !== "undefined") {
-      console.log(d);
       Tone.start();
-      // Tone.Transport.start();
       if (organisms.length === 0) {
         const newOrganisms = d.data.children
-          .filter((child) => child.type !== "other")
-          .map((child) => child.type.replace(/ /g, "_"));
+          .filter((child: child) => child.type !== "other")
+          .map((child: child) => child.type.replace(/ /g, "_"));
 
         setOrganisms(newOrganisms);
-        let organismSynths = newOrganisms.map((organism) => {
-          return players[organism.replace(/ /g, "_")];
-        });
-        organismSynths.forEach((synth) => {
+        let organismSynths = newOrganisms
+          .map((organism: string) => {
+            const player = players[organism.replace(/ /g, "_")];
+            if (!player) {
+              console.warn(`Player for organism ${organism} not found.`);
+              return null;
+            }
+            return player;
+          })
+          .filter(Boolean);
+
+        organismSynths.forEach((synth: { playNoteSequence: () => void }) => {
           playingSynths.current.push(synth);
           synth.playNoteSequence();
         });
-        console.log(organismSynths);
       } else {
         setOrganisms([]);
-        stopAllSynths();
+        stopAllSynths(d);
       }
     }
   };
 
   useEffect(() => {
-    if (ref.current) {
-      // Clear the SVG in case this effect runs multiple times
+    if (players && Object.keys(players).length > 0 && ref.current) {
       d3.select(ref.current).selectAll("*").remove();
       const svg = d3.select(ref.current);
-      const { width, height } = svg.node().getBoundingClientRect();
-      // console.log(data);
+      let margin = legend ? 35 : 10;
+
       const voronoi = svg
         .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        .attr("transform", `translate(${margin},${margin})`);
 
       const imageSize = 50;
       const defs = svg.append("defs");
@@ -83,14 +98,12 @@ const Voronoi: React.FC<VoronoiProps> = ({ data, key, circlePolygon }) => {
           .attr("width", imageSize)
           .attr("height", imageSize)
           .append("image")
-          .attr("href", fills[key])
+          .attr("href", fills[key as keyof typeof fills])
           .attr("width", imageSize)
           .attr("height", imageSize);
       }
 
       const voronoiCircles = voronoiTreemap().clip(circlePolygon);
-
-      // const voronoiTreemap = d3.voronoiTreemap().prng(seed).clip(circlePolygon);
 
       const hierarchy = d3.hierarchy(data).sum((d) => d.percentage);
       voronoiCircles(hierarchy);
@@ -105,12 +118,12 @@ const Voronoi: React.FC<VoronoiProps> = ({ data, key, circlePolygon }) => {
         .data(allNodes)
         .join("path")
         .attr("class", "background-path")
-        .attr("d", (d) => "M" + d.polygon.join("L") + "Z")
+        .attr("d", (d: any) => "M" + (d as VoronoiNode).polygon.join("L") + "Z")
         .attr("fill", "ivory");
 
       const nodes = voronoi
         .selectAll(".foreground-path")
-        .data(allNodes)
+        .data(allNodes as unknown as VoronoiNode[])
         .join("path")
         .attr("class", "foreground-path")
         .attr("d", (d) => "M" + d.polygon.join("L") + "Z")
@@ -127,52 +140,13 @@ const Voronoi: React.FC<VoronoiProps> = ({ data, key, circlePolygon }) => {
         .attr("stroke-width", (d) => 5 - d.depth * 2);
 
       nodes
-        .on("mouseover", (event, d) => onStartClick(d)) // nodes
-        .on("mouseleave", (event, d) => stopAllSynths(d)) // nodes
-        //   .on("click", (event, d) => {
-        //     return setPlayers(
-        //       d.data.children
-        //         .filter((child) => child.type !== "other")
-        //         .map((child) => child.type.replace(/ /g, "_"))
-        //     );
-        //   })
-        // .on("mouseover", (event, d) => {
-        //   // const title = key.charAt(0).toUpperCase() + key.slice(1);
-        //   const el = event.currentTarget,
-        //     elParent = el.parentNode;
-        //   update &&
-        //     update({
-        //       x: event.x / 2 + 10,
-        //       y: event.y / 2 - 100,
-        //       data: {
-        //         id: d.properties && d.properties.NAME,
-        //         text: xFormat(d.data.impressions),
-        //         parentId: title,
-        //       },
-        //     });
-        //   d3.select(el)
-        //     .attr("class", "selected")
-        //     .raise()
-        //     .style("stroke-width", 2)
-        //     .style("opacity", 0.75);
-        //   d3.select(elParent);
-        //   d3.selectAll(".unselected").attr("fill", "#ccc");
-        // })
-        // .on("mouseleave", (event) => {
-        //   update && update();
-        //   const el = event.currentTarget;
-        //   d3.select(el)
-        //     .style("stroke", "#FFF")
-        //     .attr("class", "unselected")
-        //     .style("stroke-width", 0.5)
-        //     .style("opacity", 1);
-        //   d3.selectAll(".unselected").attr("fill", selectedFill);
-        // })
+        .on("mouseover", (event, d) => onStartClick(d))
+        .on("mouseleave", (event, d) => stopAllSynths(d))
         .transition()
         .duration(1000);
       //   });
     }
-  }, [data]);
+  }, [data, players]);
 
   return <svg ref={ref} />;
 };

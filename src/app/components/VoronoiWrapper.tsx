@@ -1,19 +1,26 @@
 "use client";
 import React, { useRef, useEffect, useState } from "react";
 import useResizeObserver from "use-resize-observer";
-import Voronoi from "./Voronoi";
 import styles from "../lib/styles/VoronoiWrapper.module.scss";
 import * as d3 from "d3";
 import VoronoiCircles from "./VoronoiCircles";
 import { circularPolygon } from "../lib/utils";
 import Tooltip from "./Tooltip";
 
+type FermentData = {
+  ferment: string;
+  children: {
+    type: string;
+    percentage: number;
+    organism: string;
+  }[];
+}[];
+
 const VoronoiWrapper = () => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [tooltip, setTooltip] = useState();
   //   const { ref, width } = useResizeObserver();
-  const [data, setData] = useState(null);
-
+  const [data, setData] = useState<FermentData[]>([]);
   useEffect(() => {
     fetch("data/groupedByFerment.json")
       .then((response) => response.json())

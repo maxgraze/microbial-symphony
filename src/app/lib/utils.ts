@@ -31,7 +31,11 @@ export const truncate = (str: string, length: number) => {
   return `${str.slice(0, length)}...`;
 };
 
-export function circularPolygon(center, radius, sides) {
+export function circularPolygon(
+  center: number[],
+  radius: number,
+  sides: number
+) {
   let angle = (Math.PI * 2) / sides;
   let points = [];
   for (let i = 0; i < sides; i++) {
@@ -41,3 +45,65 @@ export function circularPolygon(center, radius, sides) {
   }
   return points;
 }
+
+export type FermentData = {
+  ferment: string;
+  children: {
+    type: string;
+    percentage: number;
+    organism: string;
+  }[];
+}[];
+
+export const legendData: FermentData = [
+  {
+    ferment: "Yeast",
+    children: [
+      {
+        type: "yeast",
+        organism: "yeast",
+        percentage: 1,
+      },
+    ],
+  },
+  {
+    ferment: "Mold",
+    children: [
+      {
+        type: "mold",
+        organism: "mold",
+        percentage: 1,
+      },
+    ],
+  },
+  {
+    ferment: "Bacilli",
+    children: [
+      {
+        type: "bacilli",
+        organism: "bacilli",
+        percentage: 1,
+      },
+    ],
+  },
+  {
+    ferment: "Lactic Acid Bacteria",
+    children: [
+      {
+        type: "lactic acid bacteria",
+        organism: "lactic acid bacteria",
+        percentage: 1,
+      },
+    ],
+  },
+  {
+    ferment: "Acetic Acid Bacteria",
+    children: [
+      {
+        type: "acetic acid bacteria",
+        organism: "acetic acid bacteria",
+        percentage: 1,
+      },
+    ],
+  },
+];

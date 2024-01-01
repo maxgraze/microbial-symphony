@@ -10,8 +10,9 @@ class Player {
   synth: any;
   notes: any;
   index: number;
-  timeoutId: null;
+  timeoutId: NodeJS.Timeout | null = null;
   getRandomNote: any;
+  release: string;
   constructor(
     synth: Tone.Synth<Tone.SynthOptions> | Tone.FMSynth,
     notes: string[],
@@ -37,28 +38,6 @@ class Player {
       delay
     );
   }
-  // playNoteRandom(releaseMin = 0.2, releaseMax = 0.5, delay = 500) {
-  //   let note = this.getRandomNote();
-  //   let release = this.getRandomRelease(releaseMin, releaseMax);
-  //   this.synth.triggerAttackRelease(note, release);
-  //   this.timeoutId = setTimeout(
-  //     () => this.playNoteRandom(releaseMin, releaseMax, delay),
-  //     delay
-  //   ) as NodeJS.Timeout;
-  // }
-
-  // playNoteSequence(delay = 500, release = "8n") {
-  //   // Clear any previously scheduled events
-  //   Tone.Transport.cancel();
-
-  //   // Schedule each note in the sequence
-  //   this.notes.forEach((note, index) => {
-  //     Tone.Transport.schedule((time) => {
-  //       this.synth.triggerAttackRelease(note, "1n", time);
-  //     }, `${index}m`); // 'm' stands for measures. This schedules each note to play one measure after the previous note.
-  //   });
-  //   Tone.Transport.start();
-  // }
 
   playNoteSequence(delay = 500) {
     let note = this.notes[this.index];
@@ -70,7 +49,9 @@ class Player {
   stopNoteSequence() {
     this.synth.triggerRelease();
 
-    clearTimeout(this.timeoutId);
+    if (this.timeoutId !== null) {
+      clearTimeout(this.timeoutId);
+    }
   }
 
   stop() {
@@ -89,10 +70,15 @@ class Player {
   // }
 }
 const Sonification = () => {
-  const { players, setPlayers } = useContext(PlayerContext);
+  const playerContext = useContext(PlayerContext);
+
+  if (!playerContext) {
+    throw new Error("Sonification must be used within a PlayerProvider");
+  }
+
+  const { players, setPlayers } = playerContext;
 
   const [isLoaded, setLoaded] = useState(false);
-  const [synths, setSynths] = useState({});
   const [data, setData] = useState({});
 
   useEffect(() => {
@@ -137,17 +123,6 @@ const Sonification = () => {
       new Tone.Synth().connect(new Tone.Reverb(1).chain(compressor)),
       LAB_notes
     );
-    // let yeast_synth = new Tone.Synth({
-    //   oscillator: { type: "sine" },
-    //   envelope: { attack: 0.001, decay: 0.2, sustain: 0.1, release: 0.1 },
-    //   volume: -5,
-    // }).chain(
-    //   new Tone.Filter({
-    //     type: "highpass",
-    //     frequency: 1400,
-    //   }),
-    //   compressor
-    // );
 
     let yeast_synth = new Tone.Synth({
       //   oscillator: { type: "sine" },
@@ -233,13 +208,6 @@ const Sonification = () => {
       acetic_acid_bacteria,
       bacilli,
     });
-    // setSynths({
-    //   lactic_acid_bacteria,
-    //   mold,
-    //   yeast,
-    //   acetic_acid_bacteria,
-    //   bacilli,
-    // });
 
     // setSelectedSynths({ mold });
 
