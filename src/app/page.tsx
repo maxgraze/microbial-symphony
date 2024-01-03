@@ -18,13 +18,20 @@ const Sonification = dynamic(() => import("./components/Sonification"), {
 
 export default function Home() {
   const [players, setPlayers] = useState<any>({});
-  const [synths, setSynths] = useState({});
   const [data, setData] = useState<FermentData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     fetch("data/groupedByFerment.json")
       .then((response) => response.json())
-      .then((data) => setData(data));
+      .then((data) => setData(data))
+      .then(() => setIsLoading(false));
   }, []);
+
+  if (isLoading) {
+    // This will be displayed while your function is loading
+    return <div>Loading...</div>;
+  }
 
   const margin = { top: 10, right: 10, bottom: 10, left: 10 };
   const spacing = 10;
@@ -61,17 +68,28 @@ export default function Home() {
             {/* <div style={{ display: "flex" }}> */}
             <h1
               style={{
-                fontFamily: "Figtee",
-                fontSize: "3em",
+                fontFamily: "Margo Condensed",
+                fontSize: "3.5em",
                 marginTop: "60px",
                 marginBottom: "40px",
               }}
             >
-              The microorganisms in your favorite foods
+              Microbial Symphony
             </h1>
+            <h2
+              style={{
+                fontFamily: "Figtree",
+                fontSize: "1.5em",
+                marginTop: "60px",
+                marginBottom: "40px",
+              }}
+            >
+              Listen to the symphony of the fusion of microorganisms in your
+              favorite foods by hovering over a circle.
+            </h2>
             <Sonification />
             <div className={styles.legend}>
-              <span className={styles.legendText}>Legend</span>
+              {/* <span className={styles.legendText}>Legend</span> */}
               <div>
                 {legendData &&
                   legendData.map((organism, i) => (
