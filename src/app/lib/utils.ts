@@ -117,4 +117,14 @@ export const legendData: FermentData = [
       },
     ],
   },
+  {
+    ferment: "Other microorganism",
+    children: [
+      {
+        type: "other",
+        organism: "other",
+        percentage: 1,
+      },
+    ],
+  },
 ];

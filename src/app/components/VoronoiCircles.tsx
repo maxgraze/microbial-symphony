@@ -84,7 +84,10 @@ const Voronoi: React.FC<VoronoiProps> = ({ data, circlePolygon, legend }) => {
 
       const voronoi = svg
         .append("g")
-        .attr("transform", `translate(${margin},${margin})`);
+        .attr(
+          "transform",
+          `translate(${legend ? margin : margin + 30},${margin})`
+        );
 
       const imageSize = 50;
       const defs = svg.append("defs");
@@ -144,11 +147,37 @@ const Voronoi: React.FC<VoronoiProps> = ({ data, circlePolygon, legend }) => {
         .on("mouseleave", (event, d) => stopAllSynths(d))
         .transition()
         .duration(1000);
-      //   });
+
+      !legend &&
+        voronoi
+          .selectAll(".node-text")
+          .data(allNodes as unknown as VoronoiNode[])
+          .join("text")
+          .attr("class", "node-text")
+          // .attr("x", 40)
+          // .attr("y", 110)
+          .attr("text-anchor", "middle")
+          .attr("font-family", "Figtree");
     }
   }, [data, players]);
 
-  return <svg ref={ref} />;
+  return (
+    <>
+      <svg ref={ref} />
+      {!legend && (
+        <div
+          style={{
+            position: "absolute",
+            top: "110px",
+            width: "100%",
+            textAlign: "center",
+          }}
+        >
+          {data.ferment}
+        </div>
+      )}
+    </>
+  );
 };
 
 export default Voronoi;

@@ -20,21 +20,31 @@ export default function Home() {
   const [players, setPlayers] = useState<any>({});
   const [data, setData] = useState<FermentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
+  function checkMobile() {
+    setIsMobile(window.innerWidth <= 768);
+  }
   useEffect(() => {
+    checkMobile();
+
+    window.addEventListener("resize", checkMobile);
+
     fetch("data/groupedByFerment.json")
       .then((response) => response.json())
       .then((data) => setData(data))
       .then(() => setIsLoading(false));
+
+    return () => {
+      window.removeEventListener("resize", checkMobile);
+    };
   }, []);
 
   if (isLoading) {
-    // This will be displayed while your function is loading
     return <div>Loading...</div>;
   }
 
   const margin = { top: 10, right: 10, bottom: 10, left: 10 };
-  const spacing = 10;
 
   const height = 1000;
   const width = 1000;
@@ -84,8 +94,8 @@ export default function Home() {
                 marginBottom: "40px",
               }}
             >
-              Listen to the symphony of the fusion of microorganisms in your
-              favorite foods by hovering over a circle.
+              Uncover the symphony of microorganisms hidden within your favorite
+              foods by hovering over a circle.
             </h2>
             <Sonification />
             <div className={styles.legend}>
@@ -118,6 +128,9 @@ export default function Home() {
               ))}
           </div>
         </PlayerContext.Provider>
+        <div style={{ float: "right", fontSize: "10px" }}>
+          © 2023 <a href="datagrazing.com">Max Graze</a>
+        </div>
       </div>
     </main>
   );
