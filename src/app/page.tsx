@@ -1,8 +1,7 @@
 "use client";
 import styles from "./lib/styles/VoronoiWrapper.module.scss";
 import "./page.module.css";
-// import Sonification from "./components/Sonification";
-import { createContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import VoronoiCircles from "./components/VoronoiCircles";
 import {
   FermentData,
@@ -86,32 +85,59 @@ export default function Home() {
             >
               Microbial Symphony
             </h1>
-            <h2
+            <div
               style={{
-                fontFamily: "Figtree",
-                fontSize: "1.5em",
-                marginTop: "60px",
-                marginBottom: "40px",
+                alignItems: "center",
+                paddingRight: "20px",
+                display: "flex",
               }}
             >
-              Uncover the symphony of microorganisms hidden within your favorite
-              foods by hovering over a circle.
-            </h2>
-            <Sonification />
-            <div className={styles.legend}>
-              {/* <span className={styles.legendText}>Legend</span> */}
-              <div>
-                {legendData &&
-                  legendData.map((organism, i) => (
-                    <div key={i} className={styles.legendItems}>
-                      <VoronoiCircles
-                        data={organism}
-                        circlePolygon={circlePolygon2}
-                        legend={true}
-                      />
-                      <span>{organism.ferment}</span>
-                    </div>
-                  ))}
+              <div
+                style={{
+                  paddingRight: "20px",
+                }}
+              >
+                <h2
+                  style={{
+                    fontFamily: "Figtree",
+                    fontSize: "1.5em",
+                    marginTop: "60px",
+                    // marginBottom: "40px",
+                    // paddingRight: "600px",
+                  }}
+                >
+                  Uncover the symphony of microorganisms hidden within your
+                  favorite foods by hovering over a circle.
+                </h2>
+                <p
+                  style={{
+                    fontFamily: "Figtree",
+                    marginBottom: "40px",
+                    // paddingRight: "600px",
+                  }}
+                >
+                  As complex fungi, yeast & molds are attributed more complex
+                  sounds over their bacteria counterparts, lactic acid, bacilli,
+                  and acetic acid. Together, these five constitute the core
+                  fermentation microorganisms.
+                </p>
+              </div>
+              <Sonification />
+              <div className={styles.legend}>
+                {/* <span className={styles.legendText}>Legend</span> */}
+                <div>
+                  {legendData &&
+                    legendData.map((organism, i) => (
+                      <div key={i} className={styles.legendItems}>
+                        <VoronoiCircles
+                          data={organism}
+                          circlePolygon={circlePolygon2}
+                          legend={true}
+                        />
+                        <span>{organism.ferment}</span>
+                      </div>
+                    ))}
+                </div>
               </div>
             </div>
           </div>
