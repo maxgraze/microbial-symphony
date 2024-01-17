@@ -26,13 +26,21 @@
   }
 }
 
+.link {
+  color: black;
+  font-weight: bolder;
+}
+
+.link:hover {
+  color: #6d929c;
+}
 .legend {
   border: 1px solid aliceblue;
   border-radius: 4px;
   display: inline-flex;
   flex-direction: column;
   padding: 10px;
-  height: 200px;
+  height: 170px;
   .legendText {
     // font-family: "Margo Condensed", sans-serif;
     font-size: 1.5em;

@@ -9,6 +9,11 @@
   margin: 100px
 }
 
+.text {
+  line-height: 1.66em;
+  width: 50%;
+  font-size: 16px;
+}
 .description {
   display: inherit;
   justify-content: inherit;

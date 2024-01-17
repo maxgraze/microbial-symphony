@@ -10,6 +10,8 @@ import {
   PlayerContext,
 } from "./lib/utils";
 import dynamic from "next/dynamic";
+import { explanation } from "./lib/motivation";
+import ReactMarkdown from "react-markdown";
 
 const Sonification = dynamic(() => import("./components/Sonification"), {
   ssr: false,
@@ -113,6 +115,7 @@ export default function Home() {
                   style={{
                     fontFamily: "Figtree",
                     marginBottom: "40px",
+                    lineHeight: "1.66em",
                     // paddingRight: "600px",
                   }}
                 >
@@ -154,6 +157,25 @@ export default function Home() {
               ))}
           </div>
         </PlayerContext.Provider>
+        <div>
+          <h1 style={{ fontFamily: "Margo Condensed" }}>Motivation</h1>
+          <p style={{ lineHeight: "1.66em", width: "50%", fontSize: "16px" }}>
+            <ReactMarkdown
+              components={{
+                a: ({ node, ...props }) => (
+                  <a
+                    className={styles.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    {...props}
+                  />
+                ),
+              }}
+            >
+              {explanation}
+            </ReactMarkdown>
+          </p>
+        </div>
         <div style={{ float: "right", fontSize: "10px" }}>
           © 2023 <a href="datagrazing.com">Max Graze</a>
         </div>

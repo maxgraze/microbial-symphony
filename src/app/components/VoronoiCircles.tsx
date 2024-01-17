@@ -154,8 +154,6 @@ const Voronoi: React.FC<VoronoiProps> = ({ data, circlePolygon, legend }) => {
           .data(allNodes as unknown as VoronoiNode[])
           .join("text")
           .attr("class", "node-text")
-          // .attr("x", 40)
-          // .attr("y", 110)
           .attr("text-anchor", "middle")
           .attr("font-family", "Figtree");
     }
