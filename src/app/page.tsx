@@ -71,12 +71,22 @@ export default function Home() {
   );
 
   const value = { players, setPlayers };
-  return (
+  return isMobile ? (
+    <div
+      style={{
+        fontFamily: "Figtree",
+        fontSize: "2em",
+        margin: "60px 40px",
+        lineHeight: "1.66em",
+      }}
+    >
+      Sorry! This experience is currently only available on desktop.
+    </div>
+  ) : (
     <main>
       <div className={styles.container}>
         <PlayerContext.Provider value={value}>
           <div>
-            {/* <div style={{ display: "flex" }}> */}
             <h1
               style={{
                 fontFamily: "Margo Condensed",
@@ -104,8 +114,6 @@ export default function Home() {
                     fontFamily: "Figtree",
                     fontSize: "1.5em",
                     marginTop: "60px",
-                    // marginBottom: "40px",
-                    // paddingRight: "600px",
                   }}
                 >
                   Uncover the symphony of microorganisms hidden within your
