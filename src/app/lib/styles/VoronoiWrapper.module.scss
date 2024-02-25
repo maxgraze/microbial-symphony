@@ -1,3 +1,5 @@
+@import url("https://p.typekit.net/p.css?s=1&k=zur3vau&ht=tk&f=598.599&a=145796415&app=typekit&e=css");
+
 .container {
   margin: 1em 5em 2em;
   // display: grid;
@@ -26,6 +28,13 @@
   }
 }
 
+.voronoiGrid:hover > .voronoiCell > svg > g {
+  opacity: 0.5;
+}
+.voronoiGrid:hover > .voronoiCell > svg > g:hover {
+  opacity: 1;
+}
+
 .link {
   color: black;
   font-weight: bolder;
@@ -34,45 +43,87 @@
 .link:hover {
   color: #6d929c;
 }
+
 .legend {
   border: 1px solid aliceblue;
   border-radius: 4px;
-  display: inline-flex;
-  flex-direction: column;
   padding: 10px;
-  height: 170px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
   .legendText {
-    // font-family: "Margo Condensed", sans-serif;
     font-size: 1.5em;
     padding: 10px;
     padding-left: 30px;
     margin-bottom: 0px;
+    text-align: center;
   }
 
   div {
     display: flex;
-    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    margin: 0px;
 
     .legendItems {
-      flex-direction: column;
       display: flex;
+      flex-direction: column;
       justify-content: center;
+      align-items: center;
       height: 150px;
       width: 100px;
-      text-align: center;
-      font-size: 0.85em;
+      padding-left: 12px;
+
+      position: relative;
+
+      svg {
+        display: block;
+        margin: auto;
+        height: 70%;
+        width: 100%;
+      }
+
       span {
         font-family: "Figtree";
         order: 2;
-        font-size: 0.85em;
-        height: 20px;
+        position: absolute;
+        right: 10px;
+        padding-top: 88px;
+        width: 100%;
+        text-align: center;
+      }
+
+      @media (max-width: 768px) {
+        flex: 0 1 calc(50% - 20px);
       }
     }
   }
-  svg {
-    display: block;
-    margin: auto;
-    height: 100%;
-    width: 100%;
-  }
+}
+
+.switchContainer {
+  position: relative;
+  // left: 300px;
+  top: 26px;
+  width: 336px;
+}
+
+.switchText {
+  color: rgb(77, 77, 77);
+  font-family: felt-tip-woman, sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+.arrow {
+  position: absolute;
+  top: 34px;
+  padding-left: 9px;
+  font-size: 48px;
+  color: rgb(77, 77, 77);
+}
+.checked > span {
+  background-color: cadetblue;
+}
+.disabled > span {
+  background-color: lightgray;
 }

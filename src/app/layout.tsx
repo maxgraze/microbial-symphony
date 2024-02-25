@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import React from "react";
+import Head from "next/head";
 
 export const metadata: Metadata = {
   title: "Microbial Symphony",
@@ -14,6 +15,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <Head>
+        <link rel="stylesheet" href="https://use.typekit.net/zur3vau.css" />
+      </Head>
       <body>{children}</body>
     </html>
   );

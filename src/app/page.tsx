@@ -12,6 +12,9 @@ import {
 import dynamic from "next/dynamic";
 import { explanation } from "./lib/motivation";
 import ReactMarkdown from "react-markdown";
+import { Switch } from "antd";
+import { AudioOutlined, AudioMutedOutlined } from "@ant-design/icons";
+import { Drawer, Button, Radio } from "antd";
 
 const Sonification = dynamic(() => import("./components/Sonification"), {
   ssr: false,
@@ -22,12 +25,18 @@ export default function Home() {
   const [data, setData] = useState<FermentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [showDrawer, setShowDrawer] = useState(false);
 
+  const toggleAudio = () => {
+    setIsPlaying(!isPlaying);
+  };
   function checkMobile() {
     setIsMobile(window.innerWidth <= 768);
   }
   useEffect(() => {
     checkMobile();
+    setShowDrawer(true);
 
     window.addEventListener("resize", checkMobile);
 
@@ -40,6 +49,15 @@ export default function Home() {
       window.removeEventListener("resize", checkMobile);
     };
   }, []);
+  const handleEnableSound = () => {
+    setIsPlaying(true);
+    setShowDrawer(false); // Close modal after selection
+  };
+
+  const handleDisableSound = () => {
+    setIsPlaying(false);
+    setShowDrawer(false); // Close modal after selection
+  };
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -61,8 +79,8 @@ export default function Home() {
   const height2 = 200;
   const width2 = 200;
   const columns2 = 5;
-  const cellWidth2 = (width2 - margin.left - margin.right) / columns2;
-  const cellHeight2 = (height2 - margin.top - margin.bottom) / columns2;
+  const cellWidth2 = width2 / columns2;
+  const cellHeight2 = height2 / columns2;
 
   let circlePolygon2 = circularPolygon(
     [cellWidth2 / 2, cellHeight2 / 2],
@@ -84,6 +102,34 @@ export default function Home() {
     </div>
   ) : (
     <main>
+      <Drawer
+        title="Sound Preference"
+        placement="bottom"
+        closable={false}
+        onClose={() => setShowDrawer(false)}
+        open={showDrawer}
+        height={200}
+      >
+        <p>
+          By allowing sound, you can <i>hear</i> the combination of the
+          microorganisms in common ferments. <br />
+          <br />
+          With a soundless experience, you can still view a simplied microbial
+          landscape of your favorite ferments
+        </p>
+        <div
+          style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}
+        >
+          <Button
+            type="primary"
+            onClick={handleEnableSound}
+            style={{ marginRight: 8 }}
+          >
+            With Sound
+          </Button>
+          <Button onClick={handleDisableSound}>Without Sound</Button>
+        </div>
+      </Drawer>
       <div className={styles.container}>
         <PlayerContext.Provider value={value}>
           <div>
@@ -97,6 +143,7 @@ export default function Home() {
             >
               Microbial Symphony
             </h1>
+
             <div
               style={{
                 alignItems: "center",
@@ -104,38 +151,49 @@ export default function Home() {
                 display: "flex",
               }}
             >
-              <div
-                style={{
-                  paddingRight: "20px",
-                }}
-              >
-                <h2
+              <div>
+                <div
                   style={{
-                    fontFamily: "Figtree",
-                    fontSize: "1.5em",
-                    marginTop: "60px",
+                    paddingRight: "42px",
                   }}
                 >
-                  Uncover the symphony of microorganisms hidden within your
-                  favorite foods by hovering over a circle.
-                </h2>
-                <p
-                  style={{
-                    fontFamily: "Figtree",
-                    marginBottom: "40px",
-                    lineHeight: "1.66em",
-                    // paddingRight: "600px",
-                  }}
-                >
-                  As complex fungi, yeast & molds are attributed more complex
-                  sounds over their bacteria counterparts, lactic acid, bacilli,
-                  and acetic acid. Together, these five constitute the core
-                  fermentation microorganisms.
-                </p>
+                  <h2
+                    style={{
+                      fontFamily: "Figtree",
+                      fontSize: "1.5em",
+                      marginTop: "60px",
+                    }}
+                  >
+                    Uncover the symphony of microorganisms hidden within your
+                    favorite foods by hovering over a circle.
+                  </h2>
+                  <p
+                    style={{
+                      fontFamily: "Figtree",
+                      marginBottom: "40px",
+                      lineHeight: "1.66em",
+                      // paddingRight: "600px",
+                    }}
+                  >
+                    As complex fungi, yeast & molds are attributed more complex
+                    sounds over their bacteria counterparts, lactic acid,
+                    bacilli, and acetic acid. Together, these five constitute
+                    the core fermentation microorganisms.
+                  </p>
+                </div>
+                {/* <div className={styles.switchContainer}>
+                  <div className={styles.switchText}>Click to allow audio</div>
+                  <Switch
+                    onChange={toggleAudio}
+                    checkedChildren={<AudioOutlined />}
+                    unCheckedChildren={<AudioMutedOutlined />}
+                    className={isPlaying ? styles.checked : styles.disabled}
+                  />
+                  <span className={styles.arrow}> &#10550;</span>
+                </div> */}
               </div>
               <Sonification />
               <div className={styles.legend}>
-                {/* <span className={styles.legendText}>Legend</span> */}
                 <div>
                   {legendData &&
                     legendData.map((organism, i) => (
@@ -144,8 +202,14 @@ export default function Home() {
                           data={organism}
                           circlePolygon={circlePolygon2}
                           legend={true}
+                          isPlaying={isPlaying}
+                          setIsPlaying={setIsPlaying}
                         />
-                        <span>{organism.ferment}</span>
+                        <span>
+                          {organism.ferment.split(" ").slice(0, 2).join(" ")}
+                          <br />
+                          {organism.ferment.split(" ").slice(2).join(" ")}
+                        </span>
                       </div>
                     ))}
                 </div>
@@ -160,6 +224,8 @@ export default function Home() {
                     data={data}
                     key={i}
                     circlePolygon={circlePolygon}
+                    isPlaying={isPlaying}
+                    setIsPlaying={setIsPlaying}
                   />
                 </div>
               ))}
@@ -185,7 +251,7 @@ export default function Home() {
           </p>
         </div>
         <div style={{ float: "right", fontSize: "10px" }}>
-          © 2023 <a href="datagrazing.com">Max Graze</a>
+          © 2023 <a href="http://www.datagrazing.com">Max Graze</a>
         </div>
       </div>
     </main>

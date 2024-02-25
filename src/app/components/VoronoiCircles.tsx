@@ -4,12 +4,15 @@ import * as d3 from "d3";
 import { fills } from "../lib/styles/fills";
 import { voronoiTreemap } from "d3-voronoi-treemap";
 import { PlayerContext } from "../lib/utils";
+import { Player, NoisePlayer } from "./Sonification";
 import * as Tone from "tone";
 
 interface VoronoiProps {
   data: any;
   circlePolygon: any;
   legend?: boolean;
+  isPlaying: boolean;
+  setIsPlaying: (isPlaying: boolean) => void;
 }
 
 interface VoronoiNode extends d3.HierarchyNode<any> {
@@ -17,7 +20,13 @@ interface VoronoiNode extends d3.HierarchyNode<any> {
 }
 
 type child = { type: string };
-const Voronoi: React.FC<VoronoiProps> = ({ data, circlePolygon, legend }) => {
+const Voronoi: React.FC<VoronoiProps> = ({
+  data,
+  circlePolygon,
+  legend,
+  isPlaying,
+  setIsPlaying,
+}) => {
   const ref = useRef<SVGSVGElement | null>(null);
 
   const players = useContext(PlayerContext)?.players;
@@ -27,17 +36,20 @@ const Voronoi: React.FC<VoronoiProps> = ({ data, circlePolygon, legend }) => {
 
   const playingSynths = useRef<any[]>([]);
 
-  const [playersLoaded, setPlayersLoaded] = useState(false); // New state for checking if players is loaded
-
+  const [playersLoaded, setPlayersLoaded] = useState(false);
   useEffect(() => {
     if (players && Object.keys(players).length > 0) {
-      setPlayersLoaded(true); // Set playersLoaded to true when players is populated
+      setPlayersLoaded(true);
     }
-  }, [players]); // This effect runs every time `players` changes
+  }, [players]);
 
   const stopAllSynths = (d: VoronoiNode) => {
     playingSynths.current.forEach((player) => {
-      player.stopNoteSequence();
+      if (player instanceof Player) {
+        player.stopNoteSequence();
+      } else if (player instanceof NoisePlayer) {
+        player.stop();
+      }
     });
     playingSynths.current.length = 0;
   };
@@ -47,32 +59,31 @@ const Voronoi: React.FC<VoronoiProps> = ({ data, circlePolygon, legend }) => {
       return;
     }
     if (typeof window !== "undefined") {
-      Tone.start();
-      if (organisms.length === 0) {
-        const newOrganisms = d.data.children
-          .filter((child: child) => child.type !== "other")
-          .map((child: child) => child.type.replace(/ /g, "_"));
+      // Tone.start();
+      const newOrganisms = d.data.children
+        // .filter((child: child) => child.type !== "other")
+        .map((child: child) => child.type.replace(/ /g, "_"));
 
-        setOrganisms(newOrganisms);
-        let organismSynths = newOrganisms
-          .map((organism: string) => {
-            const player = players[organism.replace(/ /g, "_")];
-            if (!player) {
-              console.warn(`Player for organism ${organism} not found.`);
-              return null;
-            }
-            return player;
-          })
-          .filter(Boolean);
+      setOrganisms(newOrganisms);
+      let organismSynths = newOrganisms
+        .map((organism: string) => {
+          const player = players[organism.replace(/ /g, "_")];
+          if (!player) {
+            console.warn(`Player for organism ${organism} not found.`);
+            return null;
+          }
+          return player;
+        })
+        .filter(Boolean);
 
-        organismSynths.forEach((synth: { playNoteSequence: () => void }) => {
-          playingSynths.current.push(synth);
-          synth.playNoteSequence();
-        });
-      } else {
-        setOrganisms([]);
-        stopAllSynths(d);
-      }
+      organismSynths.forEach((player: { playNoteSequence: () => void }) => {
+        playingSynths.current.push(player);
+        if (player instanceof Player) {
+          player.playNoteSequence();
+        } else if (player instanceof NoisePlayer) {
+          player.playNoiseSequence();
+        }
+      });
     }
   };
 
@@ -80,7 +91,7 @@ const Voronoi: React.FC<VoronoiProps> = ({ data, circlePolygon, legend }) => {
     if (players && Object.keys(players).length > 0 && ref.current) {
       d3.select(ref.current).selectAll("*").remove();
       const svg = d3.select(ref.current);
-      let margin = legend ? 35 : 10;
+      let margin = legend ? 4 : 10;
 
       const voronoi = svg
         .append("g")
@@ -143,7 +154,11 @@ const Voronoi: React.FC<VoronoiProps> = ({ data, circlePolygon, legend }) => {
         .attr("stroke-width", (d) => 5 - d.depth * 2);
 
       nodes
-        .on("mouseover", (event, d) => onStartClick(d))
+        .on("mouseover", (event, d) => {
+          if (isPlaying) {
+            onStartClick(d);
+          }
+        })
         .on("mouseleave", (event, d) => stopAllSynths(d))
         .transition()
         .duration(1000);
@@ -157,7 +172,7 @@ const Voronoi: React.FC<VoronoiProps> = ({ data, circlePolygon, legend }) => {
           .attr("text-anchor", "middle")
           .attr("font-family", "Figtree");
     }
-  }, [data, players]);
+  }, [players, isPlaying]);
 
   return (
     <>

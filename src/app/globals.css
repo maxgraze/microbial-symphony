@@ -1,3 +1,4 @@
+
 @font-face {
   font-family: 'Margo Condensed';
   src: url('/fonts/MargoCondensed.otf');
@@ -92,6 +93,9 @@
   box-sizing: border-box;
   padding: 0;
   margin: 0;
+}
+
+main {  font-family: 'FigTree', sans-serif;
 }
 
 html,
