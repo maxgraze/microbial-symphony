@@ -2,7 +2,6 @@
 import styles from "./lib/styles/VoronoiWrapper.module.scss";
 import "./page.module.css";
 import { useEffect, useState } from "react";
-// import VoronoiCircles from "./components/VoronoiCircles";
 import {
   FermentData,
   circularPolygon,
@@ -12,13 +11,11 @@ import {
 import dynamic from "next/dynamic";
 import { explanation } from "./lib/motivation";
 import ReactMarkdown from "react-markdown";
-import { Switch } from "antd";
-import { AudioOutlined, AudioMutedOutlined } from "@ant-design/icons";
+import VoronoiCircles from "./components/VoronoiCircles";
 import { Drawer, Button } from "antd";
-import Sonification from "./components/Sonification";
 
-const VoronoiCircles = dynamic(() => import("./components/VoronoiCircles"), {
-  ssr: false,
+const Sonification = dynamic(() => import("./components/Sonification"), {
+  ssr: false, // Disable server-side rendering for Sonification
 });
 
 export default function Home() {
@@ -29,9 +26,6 @@ export default function Home() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);
 
-  const toggleAudio = () => {
-    setIsPlaying(!isPlaying);
-  };
   function checkMobile() {
     setIsMobile(window.innerWidth <= 768);
   }
@@ -52,12 +46,12 @@ export default function Home() {
   }, []);
   const handleEnableSound = () => {
     setIsPlaying(true);
-    setShowDrawer(false); // Close modal after selection
+    setShowDrawer(false);
   };
 
   const handleDisableSound = () => {
     setIsPlaying(false);
-    setShowDrawer(false); // Close modal after selection
+    setShowDrawer(false);
   };
 
   if (isLoading) {
@@ -65,7 +59,6 @@ export default function Home() {
   }
 
   const margin = { top: 10, right: 10, bottom: 10, left: 10 };
-  console.log(data);
 
   const height = 1000;
   const width = 1000;

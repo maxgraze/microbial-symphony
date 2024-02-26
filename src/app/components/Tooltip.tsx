@@ -14,7 +14,6 @@ interface ITooltipProps {
 const Tooltip = (props: ITooltipProps) => {
   const { config } = props;
 
-  console.log(config);
   return (
     <>
       {config && (
