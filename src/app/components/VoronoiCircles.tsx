@@ -59,31 +59,36 @@ const Voronoi: React.FC<VoronoiProps> = ({
       return;
     }
     if (typeof window !== "undefined") {
-      // Tone.start();
-      const newOrganisms = d.data.children
-        // .filter((child: child) => child.type !== "other")
-        .map((child: child) => child.type.replace(/ /g, "_"));
+      Tone.start()
+        .then(() => {
+          const newOrganisms = d.data.children.map((child: child) =>
+            child.type.replace(/ /g, "_")
+          );
 
-      setOrganisms(newOrganisms);
-      let organismSynths = newOrganisms
-        .map((organism: string) => {
-          const player = players[organism.replace(/ /g, "_")];
-          if (!player) {
-            console.warn(`Player for organism ${organism} not found.`);
-            return null;
-          }
-          return player;
+          setOrganisms(newOrganisms);
+          let organismSynths = newOrganisms
+            .map((organism: string) => {
+              const player = players[organism.replace(/ /g, "_")];
+              if (!player) {
+                console.warn(`Player for organism ${organism} not found.`);
+                return null;
+              }
+              return player;
+            })
+            .filter(Boolean);
+
+          organismSynths.forEach((player: { playNoteSequence: () => void }) => {
+            playingSynths.current.push(player);
+            if (player instanceof Player) {
+              player.playNoteSequence();
+            } else if (player instanceof NoisePlayer) {
+              player.playNoiseSequence();
+            }
+          });
         })
-        .filter(Boolean);
-
-      organismSynths.forEach((player: { playNoteSequence: () => void }) => {
-        playingSynths.current.push(player);
-        if (player instanceof Player) {
-          player.playNoteSequence();
-        } else if (player instanceof NoisePlayer) {
-          player.playNoiseSequence();
-        }
-      });
+        .catch((error) => {
+          console.error("Error starting Tone.js", error);
+        });
     }
   };
 

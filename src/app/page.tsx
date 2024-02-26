@@ -2,7 +2,7 @@
 import styles from "./lib/styles/VoronoiWrapper.module.scss";
 import "./page.module.css";
 import { useEffect, useState } from "react";
-import VoronoiCircles from "./components/VoronoiCircles";
+// import VoronoiCircles from "./components/VoronoiCircles";
 import {
   FermentData,
   circularPolygon,
@@ -14,9 +14,10 @@ import { explanation } from "./lib/motivation";
 import ReactMarkdown from "react-markdown";
 import { Switch } from "antd";
 import { AudioOutlined, AudioMutedOutlined } from "@ant-design/icons";
-import { Drawer, Button, Radio } from "antd";
+import { Drawer, Button } from "antd";
+import Sonification from "./components/Sonification";
 
-const Sonification = dynamic(() => import("./components/Sonification"), {
+const VoronoiCircles = dynamic(() => import("./components/VoronoiCircles"), {
   ssr: false,
 });
 
@@ -64,6 +65,7 @@ export default function Home() {
   }
 
   const margin = { top: 10, right: 10, bottom: 10, left: 10 };
+  console.log(data);
 
   const height = 1000;
   const width = 1000;
@@ -197,7 +199,10 @@ export default function Home() {
                 <div>
                   {legendData &&
                     legendData.map((organism, i) => (
-                      <div key={i} className={styles.legendItems}>
+                      <div
+                        key={organism.ferment}
+                        className={styles.legendItems}
+                      >
                         <VoronoiCircles
                           data={organism}
                           circlePolygon={circlePolygon2}

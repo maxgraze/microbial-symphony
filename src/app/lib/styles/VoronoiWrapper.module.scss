@@ -74,7 +74,6 @@
       height: 150px;
       width: 100px;
       padding-left: 12px;
-
       position: relative;
 
       svg {
@@ -82,6 +81,7 @@
         margin: auto;
         height: 70%;
         width: 100%;
+        pointer-events: all;
       }
 
       span {
@@ -92,6 +92,8 @@
         padding-top: 88px;
         width: 100%;
         text-align: center;
+        pointer-events: none;
+        z-index: -1;
       }
 
       @media (max-width: 768px) {
