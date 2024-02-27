@@ -141,9 +141,10 @@ export default function Home() {
 
             <div
               style={{
-                alignItems: "center",
+                alignItems: "flex-start",
                 paddingRight: "20px",
                 display: "flex",
+                paddingTop: "60px",
               }}
             >
               <div>
@@ -156,7 +157,6 @@ export default function Home() {
                     style={{
                       fontFamily: "Figtree",
                       fontSize: "1.5em",
-                      marginTop: "60px",
                     }}
                   >
                     Uncover the symphony of microorganisms hidden within your
@@ -231,7 +231,7 @@ export default function Home() {
         </PlayerContext.Provider>
         <div>
           <h1 style={{ fontFamily: "Margo Condensed" }}>Motivation</h1>
-          <p style={{ lineHeight: "1.66em", width: "50%", fontSize: "16px" }}>
+          <div style={{ lineHeight: "1.66em", width: "50%", fontSize: "16px" }}>
             <ReactMarkdown
               components={{
                 a: ({ node, ...props }) => (
@@ -246,7 +246,7 @@ export default function Home() {
             >
               {explanation}
             </ReactMarkdown>
-          </p>
+          </div>
         </div>
         <div style={{ float: "right", fontSize: "10px" }}>
           © 2023 <a href="http://www.datagrazing.com">Max Graze</a>

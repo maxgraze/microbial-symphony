@@ -1,43 +1,9 @@
 "use client";
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useRef } from "react";
 import { csv } from "d3";
 
 import * as Tone from "tone";
 import { PlayerContext } from "../lib/utils";
-
-// let compressor = new Tone.Compressor(-40, 5);
-let compressor = new Tone.Compressor({
-  threshold: -30, // Increase the threshold
-  ratio: 3, // Lower the ratio
-  attack: 0.1, // Increase the attack
-  release: 0.4, // Increase the release
-});
-let limiter = new Tone.Limiter(-6);
-let volume = new Tone.Volume(-30);
-
-// let noise = new Tone.Noise({
-//   type: "brown", // brown noise
-//   volume: -25, // lower volume
-// });
-
-// let filter = new Tone.Filter({
-//   type: "highpass",
-//   frequency: 1000, // higher cutoff frequency
-//   Q: 5, // higher Q factor
-// });
-
-// let lfo = new Tone.LFO({
-//   frequency: "2n", // slower frequency
-//   type: "triangle",
-//   min: 500,
-//   max: 3000,
-// });
-
-// lfo.connect(filter.frequency);
-// noise.connect(filter).toDestination();
-
-// compressor.chain(limiter, Tone.Destination);
-
 export class NoisePlayer {
   synth: Tone.NoiseSynth;
   lfo: Tone.LFO;
@@ -72,6 +38,39 @@ export class NoisePlayer {
     this.synth.triggerRelease();
   }
 }
+
+// let compressor = new Tone.Compressor(-40, 5);
+// let compressor = new Tone.Compressor({
+//   threshold: -30, // Increase the threshold
+//   ratio: 3, // Lower the ratio
+//   attack: 0.1, // Increase the attack
+//   release: 0.4, // Increase the release
+// });
+// let limiter = new Tone.Limiter(-6);
+// let volume = new Tone.Volume(-30);
+
+// let noise = new Tone.Noise({
+//   type: "brown", // brown noise
+//   volume: -25, // lower volume
+// });
+
+// let filter = new Tone.Filter({
+//   type: "highpass",
+//   frequency: 1000, // higher cutoff frequency
+//   Q: 5, // higher Q factor
+// });
+
+// let lfo = new Tone.LFO({
+//   frequency: "2n", // slower frequency
+//   type: "triangle",
+//   min: 500,
+//   max: 3000,
+// });
+
+// lfo.connect(filter.frequency);
+// noise.connect(filter).toDestination();
+
+// compressor.chain(limiter, Tone.Destination);
 
 export class Player {
   synth: any;
@@ -157,7 +156,10 @@ export class Player {
 }
 const Sonification = () => {
   const playerContext = useContext(PlayerContext);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+  const compressorRef = useRef<Tone.Compressor | null>(null);
+  const limiterRef = useRef<Tone.Limiter | null>(null);
+  const volumeRef = useRef<Tone.Volume | null>(null);
 
   if (!playerContext) {
     throw new Error("Sonification must be used within a PlayerProvider");
@@ -188,181 +190,195 @@ const Sonification = () => {
   }, []);
 
   useEffect(() => {
-    let scaleNotes = ["E3", "G3", "A3", "B3", "D4", "E4"]; // E minor pentatonic scale
-
-    let yeast_notes = Tone.Frequency("E4")
-      .harmonize([0, 2, 4, 7, 9])
-      .map((freq) => freq.valueOf());
-
-    let yeast_synth = new Tone.PolySynth(Tone.Synth, {
-      oscillator: {
-        type: "sine",
-      },
-      envelope: {
-        attack: 0.05,
-        decay: 0.1,
-        sustain: 0.3,
-        release: 1,
-      },
-      volume: -10,
+    // Instantiate your Tone.js objects and store them in the refs
+    compressorRef.current = new Tone.Compressor({
+      threshold: -30,
+      ratio: 3,
+      attack: 0.1,
+      release: 0.4,
     });
 
-    let yeast_delay = new Tone.PingPongDelay({
-      delayTime: "4n",
-      feedback: 0.2,
-      wet: 0.2,
-    });
+    limiterRef.current = new Tone.Limiter(-6);
+    volumeRef.current = new Tone.Volume(-30);
 
-    let mold_volume = new Tone.Volume(-10);
-    yeast_synth.connect(yeast_delay);
-    yeast_synth.chain(
-      volume,
-      limiter,
-      compressor,
-      yeast_delay,
-      Tone.Destination
-    );
-    // yeast_delay.toDestination();
+    // Set up the signal chain using the .current property of the refs
+    const compressor = compressorRef.current;
+    const limiter = limiterRef.current;
+    const volume = volumeRef.current;
 
-    let yeast = new Player(yeast_synth, yeast_notes, "8n", 250);
+    if (compressor && limiter && volume) {
+      // Connect the components in your audio signal chain
+      // Example: compressor.chain(limiter, volume, Tone.Destination);
+    }
 
-    let mold_synth = new Tone.Synth();
+    // Signal that setup is complete
+    setInitialized(true);
+  }, []);
 
-    let mold_delay = new Tone.PingPongDelay({
-      delayTime: "8n",
-      feedback: 0.7,
-    });
+  useEffect(() => {
+    if (!initialized) return;
 
-    mold_synth.connect(mold_delay);
-    mold_synth.chain(mold_volume);
-    mold_delay.toDestination();
+    // Use the objects for creating synths
+    // Make sure you check if the objects are not null before using them
+    if (compressorRef.current && limiterRef.current && volumeRef.current) {
+      const setupAudioComponents = async () => {
+        let scaleNotes = ["E3", "G3", "A3", "B3", "D4", "E4"]; // E minor pentatonic scale
 
-    let mold = new Player(mold_synth, scaleNotes, "8n", 500);
+        let yeast_notes = Tone.Frequency("E4")
+          .harmonize([0, 2, 4, 7, 9])
+          .map((freq) => freq.valueOf());
 
-    let lpf = new Tone.Filter({
-      type: "lowpass",
-      frequency: 1000, // Cutoff frequency
-      rolloff: -12, // Slope of the filter. Can be -12, -24, -48 or -96 dB per octave.
-      Q: 1, // Controls the width of the filter peak. Higher values make a narrower peak.
-    });
+        let yeast_synth = new Tone.PolySynth(Tone.Synth, {
+          oscillator: {
+            type: "sine",
+          },
+          envelope: {
+            attack: 0.05,
+            decay: 0.1,
+            sustain: 0.3,
+            release: 1,
+          },
+          volume: -10,
+        });
 
-    const AAB_synth = new Tone.MonoSynth({
-      oscillator: { type: "triangle" },
-      envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 1 },
-      volume: -4,
-    }).toDestination();
+        let yeast_delay = new Tone.PingPongDelay({
+          delayTime: "4n",
+          feedback: 0.2,
+          wet: 0.2,
+        });
 
-    // AAB_synth.chain(mold_volume, Tone.Destination);
+        let mold_volume = new Tone.Volume(-10);
+        yeast_synth.connect(yeast_delay);
+        yeast_synth.chain(
+          // compressorRef.current,
+          // limiterRef.current,
+          // volumeRef.current,
+          Tone.Destination
+        );
 
-    const bacilli_synth = new Tone.MonoSynth({
-      oscillator: { type: "sine" },
-      envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 1 },
-      volume: -4,
-    }).toDestination();
+        let yeast = new Player(yeast_synth, yeast_notes, "8n", 250);
 
-    const LAB_synth = new Tone.MonoSynth({
-      oscillator: { type: "square" },
-      envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 1 },
-      volume: -8,
-    }).toDestination();
+        let mold_synth = new Tone.Synth();
 
-    // LAB_synth.chain(volume, limiter, compressor, Tone.Destination);
+        let mold_delay = new Tone.PingPongDelay({
+          delayTime: "8n",
+          feedback: 0.7,
+        });
 
-    const LAB_notes = ["E2", "A2", "B2"]; // LAB
-    const bacilli_notes = ["E2", "G#2", "B2"]; // AAB
-    const AAB_notes = ["A2", "B2", "E3"]; // bacilli
+        mold_synth.connect(mold_delay);
+        mold_synth.chain(mold_volume);
+        mold_delay.toDestination();
 
-    const AAB_delay = 250; // LAB plays every quarter second (16th note)
-    const bacilli_delay = 500; // AAB plays every half second (8th note)
-    const LAB_delay = 750; // bacilli plays every three-quarters of a second
+        let mold = new Player(mold_synth, scaleNotes, "8n", 500);
 
-    const acetic_acid_bacteria = new Player(
-      AAB_synth,
-      AAB_notes,
-      "8n",
-      AAB_delay
-    );
-    const bacilli = new Player(
-      bacilli_synth,
-      bacilli_notes,
-      "8n",
-      bacilli_delay
-    );
-    const lactic_acid_bacteria = new Player(
-      LAB_synth,
-      LAB_notes,
-      "8n",
-      LAB_delay
-    );
+        const AAB_synth = new Tone.MonoSynth({
+          oscillator: { type: "triangle" },
+          envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 1 },
+          volume: -4,
+        }).toDestination();
 
-    let noise = new Tone.NoiseSynth({
-      noise: {
-        type: "brown", // brown noise
-      },
-      envelope: {
-        attack: 0,
-        decay: 0.1,
-        sustain: 0.3,
-      },
-      volume: -20,
-    });
+        // AAB_synth.chain(mold_volume, Tone.Destination);
 
-    let filter = new Tone.Filter({
-      type: "highpass",
-      frequency: 1000, // higher cutoff frequency
-      Q: 5, // higher Q factor
-    });
+        const bacilli_synth = new Tone.MonoSynth({
+          oscillator: { type: "sine" },
+          envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 1 },
+          volume: -4,
+        }).toDestination();
 
-    let lfo = new Tone.LFO({
-      frequency: "2n", // slower frequency
-      type: "triangle", // smoother waveform
-      min: 500, // higher minimum frequency
-      max: 3000, // higher maximum frequency
-    });
+        const LAB_synth = new Tone.MonoSynth({
+          oscillator: { type: "square" },
+          envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 1 },
+          volume: -8,
+        }).toDestination();
 
-    lfo.connect(filter.frequency);
-    noise.connect(filter).toDestination();
+        // LAB_synth.chain(volume, limiter, compressor, Tone.Destination);
 
-    let other = new NoisePlayer(noise, lfo, "8n", 2000);
+        const LAB_notes = ["E2", "A2", "B2"]; // LAB
+        const bacilli_notes = ["E2", "G#2", "B2"]; // AAB
+        const AAB_notes = ["A2", "B2", "E3"]; // bacilli
 
-    let noiseSynth = new Tone.NoiseSynth({
-      noise: {
-        type: "white",
-      },
-      envelope: {
-        attack: 0,
-        decay: 0.1,
-        sustain: 0.3,
-      },
-      volume: -10,
-    }).toDestination();
+        const AAB_delay = 250; // LAB plays every quarter second (16th note)
+        const bacilli_delay = 500; // AAB plays every half second (8th note)
+        const LAB_delay = 750; // bacilli plays every three-quarters of a second
 
-    // let filter = new Tone.Filter({
-    //   type: "highpass",
-    //   frequency: 200,
-    //   Q: 1,
-    // }).toDestination();
+        const acetic_acid_bacteria = new Player(
+          AAB_synth,
+          AAB_notes,
+          "8n",
+          AAB_delay
+        );
+        const bacilli = new Player(
+          bacilli_synth,
+          bacilli_notes,
+          "8n",
+          bacilli_delay
+        );
+        const lactic_acid_bacteria = new Player(
+          LAB_synth,
+          LAB_notes,
+          "8n",
+          LAB_delay
+        );
 
-    // let lfo = new Tone.LFO({
-    //   frequency: "4n",
-    //   type: "sine",
-    //   min: 200,
-    //   max: 2000,
-    // }).connect(filter.frequency);
+        let noise = new Tone.NoiseSynth({
+          noise: {
+            type: "brown", // brown noise
+          },
+          envelope: {
+            attack: 0,
+            decay: 0.1,
+            sustain: 0.3,
+          },
+          volume: -20,
+        });
 
-    noiseSynth.connect(filter);
+        let filter = new Tone.Filter({
+          type: "highpass",
+          frequency: 1000, // higher cutoff frequency
+          Q: 5, // higher Q factor
+        });
 
-    setPlayers({
-      lactic_acid_bacteria,
-      mold,
-      yeast,
-      acetic_acid_bacteria,
-      bacilli,
-      other,
-    });
+        let lfo = new Tone.LFO({
+          frequency: "2n", // slower frequency
+          type: "triangle", // smoother waveform
+          min: 500, // higher minimum frequency
+          max: 3000, // higher maximum frequency
+        });
 
-    setLoaded(true);
-  }, [data]);
+        lfo.connect(filter.frequency);
+        noise.connect(filter).toDestination();
+
+        let other = new NoisePlayer(noise, lfo, "8n", 2000);
+
+        let noiseSynth = new Tone.NoiseSynth({
+          noise: {
+            type: "white",
+          },
+          envelope: {
+            attack: 0,
+            decay: 0.1,
+            sustain: 0.3,
+          },
+          volume: -10,
+        }).toDestination();
+
+        noiseSynth.connect(filter);
+
+        setPlayers({
+          lactic_acid_bacteria,
+          mold,
+          yeast,
+          acetic_acid_bacteria,
+          bacilli,
+          other,
+        });
+
+        setLoaded(true);
+      };
+
+      setupAudioComponents();
+    }
+  }, [initialized, data]);
 
   return <></>;
 };
