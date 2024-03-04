@@ -3,7 +3,7 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { fills } from "../lib/styles/fills";
 import { voronoiTreemap } from "d3-voronoi-treemap";
-import { PlayerContext } from "../lib/utils";
+import { PlayerContext, IPlayable } from "../lib/utils";
 import { Player, NoisePlayer } from "./Sonification";
 import * as Tone from "tone";
 
@@ -19,18 +19,15 @@ interface VoronoiNode extends d3.HierarchyNode<any> {
   polygon: [number, number][];
 }
 
-type child = { type: string };
 const Voronoi: React.FC<VoronoiProps> = ({
   data,
   circlePolygon,
   legend,
   isPlaying,
-  setIsPlaying,
 }) => {
   const ref = useRef<SVGSVGElement | null>(null);
 
   const players = useContext(PlayerContext)?.players;
-  const setPlayers = useContext(PlayerContext)?.setPlayers;
 
   const [organisms, setOrganisms] = useState([]);
 
@@ -43,10 +40,10 @@ const Voronoi: React.FC<VoronoiProps> = ({
     }
   }, [players]);
 
-  const stopAllSynths = (d: VoronoiNode) => {
+  const stopAllSynths = () => {
     playingSynths.current.forEach((player) => {
       if (player instanceof Player) {
-        player.stopNoteSequence();
+        player.stop();
       } else if (player instanceof NoisePlayer) {
         player.stop();
       }
@@ -54,42 +51,45 @@ const Voronoi: React.FC<VoronoiProps> = ({
     playingSynths.current.length = 0;
   };
 
-  const onStartClick = (d: VoronoiNode) => {
-    if (!playersLoaded) {
+  const onStartClick = async (d: VoronoiNode) => {
+    if (!playersLoaded || typeof window === "undefined") {
       return;
     }
-    if (typeof window !== "undefined") {
-      Tone.start()
-        .then(() => {
-          const newOrganisms = d.data.children.map((child: child) =>
-            child.type.replace(/ /g, "_")
-          );
 
-          setOrganisms(newOrganisms);
-          let organismSynths = newOrganisms
-            .map((organism: string) => {
-              const player = players[organism.replace(/ /g, "_")];
-              if (!player) {
-                console.warn(`Player for organism ${organism} not found.`);
-                return null;
-              }
-              return player;
-            })
-            .filter(Boolean);
-
-          organismSynths.forEach((player: { playNoteSequence: () => void }) => {
-            playingSynths.current.push(player);
-            if (player instanceof Player) {
-              player.playNoteSequence();
-            } else if (player instanceof NoisePlayer) {
-              player.playNoiseSequence();
-            }
-          });
-        })
-        .catch((error) => {
-          console.error("Error starting Tone.js", error);
-        });
+    // Only start Tone.js if not already started
+    if (Tone.context.state !== "running") {
+      try {
+        await Tone.start();
+        console.log("Audio is ready");
+      } catch (error) {
+        console.error("Error starting Tone.js", error);
+        return;
+      }
     }
+
+    const newOrganisms = d.data.children.map((child: { type: string }) =>
+      child.type.replace(/ /g, "_")
+    );
+    setOrganisms(newOrganisms);
+
+    // Stop any currently playing synths before starting new ones
+    stopAllSynths();
+
+    let organismSynths = newOrganisms
+      .map((organism: string | number) => {
+        const player = players[organism];
+        if (!player) {
+          console.warn(`Player for organism ${organism} not found.`);
+          return null;
+        }
+        return player;
+      })
+      .filter(Boolean);
+
+    organismSynths.forEach((player: IPlayable) => {
+      playingSynths.current.push(player);
+      player.play();
+    });
   };
 
   useEffect(() => {
@@ -164,7 +164,7 @@ const Voronoi: React.FC<VoronoiProps> = ({
             onStartClick(d);
           }
         })
-        .on("mouseleave", (event, d) => stopAllSynths(d))
+        .on("mouseleave", () => stopAllSynths())
         .transition()
         .duration(1000);
 

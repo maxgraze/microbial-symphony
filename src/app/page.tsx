@@ -110,7 +110,7 @@ export default function Home() {
           microorganisms in common ferments. <br />
           <br />
           With a soundless experience, you can still view a simplied microbial
-          landscape of your favorite ferments
+          landscape of your favorite ferments.
         </p>
         <div
           style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}

@@ -4,7 +4,13 @@ import { csv } from "d3";
 
 import * as Tone from "tone";
 import { PlayerContext } from "../lib/utils";
-export class NoisePlayer {
+
+interface IPlayable {
+  play(): void;
+  stop(): void;
+}
+
+export class NoisePlayer implements IPlayable {
   synth: Tone.NoiseSynth;
   lfo: Tone.LFO;
   duration: string;
@@ -15,7 +21,7 @@ export class NoisePlayer {
     synth: Tone.NoiseSynth,
     lfo: Tone.LFO,
     duration: string,
-    delay = 500
+    delay: number = 500
   ) {
     this.synth = synth;
     this.lfo = lfo;
@@ -23,137 +29,67 @@ export class NoisePlayer {
     this.delay = delay;
   }
 
-  playNoiseRandom() {
-    this.synth.triggerAttack();
-    this.lfo.start();
+  play(): void {
+    this.playNoiseSequence();
   }
 
-  playNoiseSequence() {
-    this.synth.triggerAttack();
-    this.lfo.start();
-  }
-
-  stop() {
+  stop(): void {
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+      this.timeoutId = null;
+    }
     this.lfo.stop();
     this.synth.triggerRelease();
   }
+
+  playNoiseSequence(): void {
+    this.synth.triggerAttack();
+    this.lfo.start();
+  }
 }
 
-// let compressor = new Tone.Compressor(-40, 5);
-// let compressor = new Tone.Compressor({
-//   threshold: -30, // Increase the threshold
-//   ratio: 3, // Lower the ratio
-//   attack: 0.1, // Increase the attack
-//   release: 0.4, // Increase the release
-// });
-// let limiter = new Tone.Limiter(-6);
-// let volume = new Tone.Volume(-30);
-
-// let noise = new Tone.Noise({
-//   type: "brown", // brown noise
-//   volume: -25, // lower volume
-// });
-
-// let filter = new Tone.Filter({
-//   type: "highpass",
-//   frequency: 1000, // higher cutoff frequency
-//   Q: 5, // higher Q factor
-// });
-
-// let lfo = new Tone.LFO({
-//   frequency: "2n", // slower frequency
-//   type: "triangle",
-//   min: 500,
-//   max: 3000,
-// });
-
-// lfo.connect(filter.frequency);
-// noise.connect(filter).toDestination();
-
-// compressor.chain(limiter, Tone.Destination);
-
-export class Player {
-  synth: any;
-  notes: any;
-  index: number;
+export class Player implements IPlayable {
+  synth: Tone.Synth | Tone.FMSynth | Tone.PolySynth | Tone.MonoSynth;
+  notes: Array<number | string>;
+  index: number = 0;
   timeoutId: NodeJS.Timeout | null = null;
   delay: number;
   release: string;
-  constructor(
-    synth:
-      | Tone.Synth<Tone.SynthOptions>
-      | Tone.FMSynth
-      | Tone.PolySynth
-      | Tone.MonoSynth,
 
-    notes: number[] | string[],
-    release = "0.2",
-    delay = 500
+  constructor(
+    synth: Tone.Synth | Tone.FMSynth | Tone.PolySynth | Tone.MonoSynth,
+    notes: Array<number | string>,
+    release: string = "0.2",
+    delay: number = 500
   ) {
     this.synth = synth;
     this.notes = notes;
-    this.index = 0;
-    this.timeoutId = null;
     this.release = release;
     this.delay = delay;
   }
 
-  getRandomNote() {
-    if (this.notes.length > 0) {
-      return this.notes[this.index];
-    }
-    return "";
+  play(): void {
+    this.playNoteSequence();
   }
 
-  getRandomRelease() {
-    return this.release;
-  }
-
-  playNoteRandom(releaseMin = 0.2, releaseMax = 0.5) {
-    let note = this.getRandomNote();
-    let release = Math.random() * (releaseMax - releaseMin) + releaseMin;
-    this.synth.triggerAttackRelease(note, release);
-    this.timeoutId = setTimeout(
-      () => this.playNoteRandom(releaseMin, releaseMax),
-      this.delay
-    );
-  }
-
-  playNoteSequence(callback: Function, activateNoiseAndLFO = false) {
-    let note = this.notes[this.index++ % this.notes.length];
-
-    // Check if synth is an instance of NoiseSynth
-    if (this.synth instanceof Tone.NoiseSynth) {
-      // Start the noise
-      this.synth.triggerAttackRelease(note, this.release);
-      // Stop the noise after the release time
-    } else {
-      // Play the note
-      this.synth.triggerAttackRelease(note, this.release);
-    }
-    // let note = this.getRandomNote();
-    this.synth.triggerAttackRelease(note, "8n", "+0.1", 0.6);
-    this.index = (this.index + 1) % this.notes.length;
-    this.timeoutId = setTimeout(() => {
-      this.playNoteSequence(callback, activateNoiseAndLFO);
-    }, this.delay);
-  }
-
-  stopNoteSequence() {
-    this.synth.triggerRelease();
-
-    if (this.timeoutId !== null) {
-      clearTimeout(this.timeoutId);
-    }
-  }
-
-  stop() {
+  stop(time?: number): void {
     if (this.timeoutId) {
       clearTimeout(this.timeoutId);
+      this.timeoutId = null;
     }
-    this.synth.dispose();
+    this.synth.triggerRelease(time ? time : Tone.now());
+  }
+
+  playNoteSequence(): void {
+    let note = this.notes[this.index++ % this.notes.length];
+    this.synth.triggerAttackRelease(note, this.release);
+    // Schedule the next note
+    this.timeoutId = setTimeout(() => {
+      this.playNoteSequence(); // Continue playing the next note in sequence
+    }, this.delay);
   }
 }
+
 const Sonification = () => {
   const playerContext = useContext(PlayerContext);
   const [initialized, setInitialized] = useState(false);

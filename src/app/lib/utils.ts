@@ -128,3 +128,8 @@ export const legendData: FermentData = [
     ],
   },
 ];
+
+export interface IPlayable {
+  play(): void;
+  stop(): void;
+}
