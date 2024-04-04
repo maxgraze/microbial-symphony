@@ -2,18 +2,29 @@
 
 .container {
   margin: 1em 5em 2em;
-  // display: grid;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  justify-content: center;
+  align-items: center;
   gap: 40px;
   * {
-    margin-bottom: 40px;
+    margin-bottom: 20px;
   }
   font-size: "Figtree";
 }
 
+.display {
+  // min-height: 100vh; // get rid of this to have the legend on the same view
+  text-align: center;
+  padding-top: 20vh;
+  max-width: 400px;
+}
 .voronoiGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(142px, 1fr));
   gap: 10px;
+  margin: 0 100px;
 }
 
 .voronoiCell {
@@ -44,61 +55,52 @@
   color: #6d929c;
 }
 
-.legend {
-  border: 1px solid aliceblue;
-  border-radius: 4px;
+.legendText {
+  font-size: 1.5em;
   padding: 10px;
+  padding-left: 30px;
+  margin-bottom: 0px;
+  text-align: center;
+}
+
+.legend {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  margin: 0px;
 
-  .legendText {
-    font-size: 1.5em;
-    padding: 10px;
-    padding-left: 30px;
-    margin-bottom: 0px;
-    text-align: center;
-  }
-
-  div {
+  .legendItems {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    margin: 0px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 150px;
+    width: 100px;
+    padding-left: 12px;
+    position: relative;
 
-    .legendItems {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 150px;
-      width: 100px;
-      padding-left: 12px;
-      position: relative;
+    svg {
+      display: block;
+      margin: auto;
+      height: 70%;
+      width: 100%;
+      pointer-events: all;
+    }
 
-      svg {
-        display: block;
-        margin: auto;
-        height: 70%;
-        width: 100%;
-        pointer-events: all;
-      }
+    span {
+      font-family: "Figtree";
+      order: 2;
+      position: absolute;
+      right: 10px;
+      padding-top: 88px;
+      width: 100%;
+      text-align: center;
+      pointer-events: none;
+      z-index: -1;
+    }
 
-      span {
-        font-family: "Figtree";
-        order: 2;
-        position: absolute;
-        right: 10px;
-        padding-top: 88px;
-        width: 100%;
-        text-align: center;
-        pointer-events: none;
-        z-index: -1;
-      }
-
-      @media (max-width: 768px) {
-        flex: 0 1 calc(50% - 20px);
-      }
+    @media (max-width: 768px) {
+      flex: 0 1 calc(50% - 20px);
     }
   }
 }
@@ -128,4 +130,17 @@
 }
 .disabled > span {
   background-color: lightgray;
+}
+
+.navCircles {
+  display: flex;
+  align-items: center;
+}
+
+.stickyNav {
+  position: relative;
+  top: 0;
+  z-index: 1000; /* Ensure it stays on top of other content */
+  background-color: white; /* Or any background */
+  transition: transform 0.3s ease-in-out; /* Smooth transition for scaling */
 }

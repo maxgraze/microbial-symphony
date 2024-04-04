@@ -1,22 +1,35 @@
 "use client";
 import styles from "./lib/styles/VoronoiWrapper.module.scss";
 import "./page.module.css";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FermentData,
   circularPolygon,
   legendData,
   PlayerContext,
+  useSticky,
 } from "./lib/utils";
 import dynamic from "next/dynamic";
 import { explanation } from "./lib/motivation";
 import ReactMarkdown from "react-markdown";
 import VoronoiCircles from "./components/VoronoiCircles";
 import { Drawer, Button } from "antd";
+import Circles from "./components/Circles";
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useAnimation,
+  useTransform,
+} from "framer-motion";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
 const Sonification = dynamic(() => import("./components/Sonification"), {
   ssr: false, // Disable server-side rendering for Sonification
 });
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function Home() {
   const [players, setPlayers] = useState<any>({});
@@ -25,6 +38,78 @@ export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);
+  const [style, setStyle] = useState(false);
+
+  const controls = useAnimation();
+
+  // const container = useSticky<HTMLDivElement>();
+
+  const [isSticky, setIsSticky] = useState(false);
+  const logoRef = useRef<HTMLDivElement>(null);
+
+  console.log("Before useEffect:", logoRef.current);
+
+  useEffect(() => {
+    setTimeout(() => {
+      if (logoRef.current) {
+        console.log("Ref is now available", logoRef.current);
+        let logoTl = gsap.timeline({
+          scrollTrigger: {
+            trigger: document.body,
+            start: "top top",
+            end: () => window.innerHeight * 1.2,
+            scrub: 0.6,
+            markers: true, // Add this for debugging
+          },
+        });
+
+        logoTl.fromTo(
+          logoRef.current,
+          {
+            top: "20vw",
+            yPercent: -50,
+            scale: 1.7,
+          },
+          {
+            top: "2vw",
+            yPercent: 0,
+            scale: 1,
+            duration: 0.8,
+          }
+        );
+      }
+
+      // return () => {
+      //   ScrollTrigger.getAll().forEach((trigger) => trigger.kill()); // Clean up triggers
+      // };
+    }, 500);
+  }, []);
+
+  // const { scrollYProgress } = useScroll(); // Tracks the scroll position
+  // const y = useTransform(scrollYProgress, [0, 200], [0, -200]);
+
+  // const variants = {
+  //   initial: {
+  //     scale: 1,
+  //     opacity: 0.5,
+  //     transition: { duration: 0.5 },
+  //   },
+  //   sticky: {
+  //     scale: 0.8,
+  //     opacity: 1,
+  //     transition: { duration: 0.5 },
+  //   },
+  // };
+
+  // useEffect(() => {
+  //   const handleScroll = () => {
+  //     const threshold = 100; // Set a threshold for the sticky effect
+  //     setIsSticky(window.scrollY > threshold);
+  //   };
+
+  //   window.addEventListener("scroll", handleScroll);
+  //   return () => window.removeEventListener("scroll", handleScroll);
+  // }, []);
 
   function checkMobile() {
     setIsMobile(window.innerWidth <= 768);
@@ -97,7 +182,7 @@ export default function Home() {
     </div>
   ) : (
     <main>
-      <Drawer
+      {/* <Drawer
         title="Sound Preference"
         placement="bottom"
         closable={false}
@@ -124,133 +209,125 @@ export default function Home() {
           </Button>
           <Button onClick={handleDisableSound}>Without Sound</Button>
         </div>
-      </Drawer>
-      <div className={styles.container}>
-        <PlayerContext.Provider value={value}>
-          <div>
+      </Drawer> */}
+      <PlayerContext.Provider value={value}>
+        <div className={styles.container}>
+          <div className={styles.display}>
             <h1
               style={{
                 fontFamily: "Margo Condensed",
-                fontSize: "3.5em",
-                marginTop: "60px",
-                marginBottom: "40px",
+                fontSize: "8em",
+                paddingBottom: "20px",
               }}
             >
               Microbial Symphony
             </h1>
-
-            <div
+            <p
               style={{
-                alignItems: "flex-start",
-                paddingRight: "20px",
-                display: "flex",
-                paddingTop: "60px",
+                marginTop: " 20px",
               }}
             >
-              <div>
-                <div
-                  style={{
-                    paddingRight: "42px",
-                  }}
-                >
-                  <h2
-                    style={{
-                      fontFamily: "Figtree",
-                      fontSize: "1.5em",
-                    }}
-                  >
-                    Uncover the symphony of microorganisms hidden within your
-                    favorite foods by hovering over a circle.
-                  </h2>
-                  <p
-                    style={{
-                      fontFamily: "Figtree",
-                      marginBottom: "40px",
-                      lineHeight: "1.66em",
-                      // paddingRight: "600px",
-                    }}
-                  >
-                    As complex fungi, yeast & molds are attributed more complex
-                    sounds over their bacteria counterparts, lactic acid,
-                    bacilli, and acetic acid. Together, these five constitute
-                    the core fermentation microorganisms.
-                  </p>
-                </div>
-                {/* <div className={styles.switchContainer}>
-                  <div className={styles.switchText}>Click to allow audio</div>
-                  <Switch
-                    onChange={toggleAudio}
-                    checkedChildren={<AudioOutlined />}
-                    unCheckedChildren={<AudioMutedOutlined />}
-                    className={isPlaying ? styles.checked : styles.disabled}
-                  />
-                  <span className={styles.arrow}> &#10550;</span>
-                </div> */}
-              </div>
-              <Sonification />
+              {" "}
+              Uncover the symphony of microorganisms hidden within your favorite
+              foods by hovering over a circle.
+            </p>
+          </div>
+          <Sonification />
+          <div ref={logoRef} className={styles.stickyNav}>
+            <div
+
+            // className={` ${isSticky ? styles.stickyNav : ""}`}
+            // initial={{ scale: 1 }}
+            // animate={{ scale: isShrunk ? 0.5 : 1 }}
+            // transition={{ duration: 0.3 }}
+            >
               <div className={styles.legend}>
-                <div>
-                  {legendData &&
-                    legendData.map((organism, i) => (
-                      <div
-                        key={organism.ferment}
-                        className={styles.legendItems}
-                      >
-                        <VoronoiCircles
-                          data={organism}
-                          circlePolygon={circlePolygon2}
-                          legend={true}
-                          isPlaying={isPlaying}
-                          setIsPlaying={setIsPlaying}
-                        />
-                        <span>
-                          {organism.ferment.split(" ").slice(0, 2).join(" ")}
-                          <br />
-                          {organism.ferment.split(" ").slice(2).join(" ")}
-                        </span>
-                      </div>
-                    ))}
-                </div>
+                {legendData.map((organism, i) => (
+                  <div key={organism.ferment} className={styles.legendItems}>
+                    <VoronoiCircles
+                      data={organism}
+                      circlePolygon={circlePolygon2}
+                      legend={true}
+                      isPlaying={isPlaying}
+                      setIsPlaying={setIsPlaying}
+                    />
+                    <span>
+                      {organism.ferment.split(" ").slice(0, 2).join(" ")}
+                      <br />
+                      {organism.ferment.split(" ").slice(2).join(" ")}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-          <div className={styles.voronoiGrid}>
-            {data &&
-              data.map((data, i) => (
-                <div key={i} className={styles.voronoiCell}>
-                  <VoronoiCircles
-                    data={data}
-                    key={i}
-                    circlePolygon={circlePolygon}
-                    isPlaying={isPlaying}
-                    setIsPlaying={setIsPlaying}
-                  />
-                </div>
-              ))}
-          </div>
-        </PlayerContext.Provider>
-        <div>
-          <h1 style={{ fontFamily: "Margo Condensed" }}>Motivation</h1>
-          <div style={{ lineHeight: "1.66em", width: "50%", fontSize: "16px" }}>
-            <ReactMarkdown
-              components={{
-                a: ({ node, ...props }) => (
-                  <a
-                    className={styles.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    {...props}
-                  />
-                ),
+          <div>
+            <h1
+              style={{
+                // fontFamily: "Margo Condensed",
+                fontSize: "2em",
+                paddingBottom: "20px",
+                paddingTop: "20px",
               }}
             >
-              {explanation}
-            </ReactMarkdown>
+              What does a baguette sound like?
+            </h1>
+            {/* <div className={styles.navCircles}>
+              {legendData &&
+                legendData.map((organism, i) => (
+                  <div key={organism.ferment} className={styles.navCircles}>
+                    <Circles
+                      data={organism}
+                      i={i}
+                      isPlaying={isPlaying}
+                      setIsPlaying={setIsPlaying}
+                    />
+                    <span>
+                      {organism.ferment.split(" ").slice(0, 2).join(" ")}
+                      <br />
+                      {organism.ferment.split(" ").slice(2).join(" ")}
+                    </span>{" "}
+                  </div>
+                ))}
+            </div> */}
           </div>
         </div>
-        <div style={{ float: "right", fontSize: "10px" }}>
-          © 2023 <a href="http://www.datagrazing.com">Max Graze</a>
+        <div className={styles.voronoiGrid}>
+          {data &&
+            data.map((data, i) => (
+              <div key={i} className={styles.voronoiCell}>
+                <VoronoiCircles
+                  data={data}
+                  key={i}
+                  circlePolygon={circlePolygon}
+                  isPlaying={isPlaying}
+                  setIsPlaying={setIsPlaying}
+                />
+              </div>
+            ))}
         </div>
+      </PlayerContext.Provider>
+      <div>
+        <h1 style={{ fontFamily: "Margo Condensed" }}>Motivation</h1>
+        <div style={{ lineHeight: "1.66em", width: "50%", fontSize: "16px" }}>
+          <ReactMarkdown
+            components={{
+              a: ({ node, ...props }) => (
+                <a
+                  className={styles.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  {...props}
+                />
+              ),
+            }}
+          >
+            {explanation}
+          </ReactMarkdown>
+        </div>
+      </div>
+      <div style={{ float: "right", fontSize: "10px" }}>
+        © 2023 <a href="http://www.datagrazing.com">Max Graze</a>
       </div>
     </main>
   );

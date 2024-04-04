@@ -1,4 +1,4 @@
-import { createContext } from "react";
+import { createContext, useEffect, useRef, useState } from "react";
 
 interface PlayerContextType {
   players: any;
@@ -9,6 +9,46 @@ export const PlayerContext = createContext<PlayerContextType | undefined>(
   undefined
 );
 
+export function onSticky(
+  selector: string | HTMLElement,
+  callback: (isSticky: boolean) => void
+) {
+  const element =
+    typeof selector === "string" ? document.querySelector(selector) : selector;
+
+  if (!element) {
+    return;
+  }
+
+  const observer = new IntersectionObserver(
+    ([event]) => callback(event.intersectionRatio < 1),
+    { threshold: [1], rootMargin: "-1px 0px 0px 0px" }
+  );
+  observer.observe(element);
+
+  return { observer, element };
+}
+export function useSticky() {
+  const ref = useRef<HTMLDivElement>(null);
+
+  const [isSticky, setIsSticky] = useState(false);
+
+  useEffect(() => {
+    if (!ref.current) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([event]) => setIsSticky(event.intersectionRatio < 1),
+      { threshold: [1], rootMargin: "-1px 0px 0px 0px" }
+    );
+    observer.observe(ref.current);
+
+    return () => observer.disconnect();
+  }, []);
+
+  return { ref, isSticky };
+}
 export function nFormatter(num: number, digits?: number) {
   if (!num) return "0";
   const lookup = [
