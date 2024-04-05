@@ -21,6 +21,8 @@ import {
   useScroll,
   useAnimation,
   useTransform,
+  useMotionValueEvent,
+  useAnimate,
 } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
@@ -36,80 +38,102 @@ export default function Home() {
   const [data, setData] = useState<FermentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true); //change to false
   const [showDrawer, setShowDrawer] = useState(false);
-  const [style, setStyle] = useState(false);
+  const [scope, animate] = useAnimate();
 
   const controls = useAnimation();
 
   // const container = useSticky<HTMLDivElement>();
 
-  const [isSticky, setIsSticky] = useState(false);
-  const logoRef = useRef<HTMLDivElement>(null);
+  const [isFixed, setIsFixed] = useState(false); // State to toggle fixed positioning
 
-  console.log("Before useEffect:", logoRef.current);
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["end end", "start start"],
+  });
+
+  // useMotionValueEvent(scrollYProgress, "change", (value) => {
+  //   setProgress(value);
+  //   if (progress >= 1) {
+  //     controls.start({ position: "fixed", top: 0, width: "100%" }); // Ensure the element doesn't change width when fixed.
+  //   } else {
+  //     controls.start({ y: 0, position: "relative" });
+  //   }
+  // });
+  const blurValue = useTransform(scrollYProgress, [0, 1], ["0px", "20px"]);
+
+  const variants = {
+    initial: {
+      scale: 1,
+    },
+    sticky: {
+      scale: 0.6,
+      opacity: 1,
+      backgroundColor: "rgba(255, 255, 255, 0.5)",
+    },
+  };
 
   useEffect(() => {
-    setTimeout(() => {
-      if (logoRef.current) {
-        console.log("Ref is now available", logoRef.current);
-        let logoTl = gsap.timeline({
-          scrollTrigger: {
-            trigger: document.body,
-            start: "top top",
-            end: () => window.innerHeight * 1.2,
-            scrub: 0.6,
-            markers: true, // Add this for debugging
-          },
-        });
+    const initialTop = ref.current ? ref.current.offsetTop : 0;
 
-        logoTl.fromTo(
-          logoRef.current,
-          {
-            top: "20vw",
-            yPercent: -50,
-            scale: 1.7,
-          },
-          {
-            top: "2vw",
-            yPercent: 0,
+    const calculateProgress = () => {
+      const currentScroll = window.scrollY;
+      const elementTop = ref.current
+        ? ref.current.getBoundingClientRect().top + currentScroll
+        : 0;
+
+      const shouldBeFixed = elementTop - currentScroll <= initialTop;
+      //      // backdropFilter: blurValue,
+
+      // Only trigger controls and update state when there's an actual change
+      if (shouldBeFixed !== isFixed) {
+        setIsFixed(shouldBeFixed);
+        if (shouldBeFixed) {
+          // controls.set("sticky");
+          controls.start({
+            y: 0,
+            position: "fixed",
+            top: -30,
+            zIndex: 1000,
+            width: "100%",
+            scale: 0.6,
+            transition: { duration: 1 },
+          });
+          setIsFixed(true);
+        } else {
+          // controls.set("inital");
+          controls.start({
+            y: 0,
+            position: "relative",
             scale: 1,
-            duration: 0.8,
-          }
-        );
+            transition: { duration: 1 },
+          });
+
+          setIsFixed(false);
+        }
       }
+    };
+    const unsubscribe = scrollYProgress.on("change", calculateProgress);
 
-      // return () => {
-      //   ScrollTrigger.getAll().forEach((trigger) => trigger.kill()); // Clean up triggers
-      // };
-    }, 500);
-  }, []);
-
-  // const { scrollYProgress } = useScroll(); // Tracks the scroll position
-  // const y = useTransform(scrollYProgress, [0, 200], [0, -200]);
-
-  // const variants = {
-  //   initial: {
-  //     scale: 1,
-  //     opacity: 0.5,
-  //     transition: { duration: 0.5 },
-  //   },
-  //   sticky: {
-  //     scale: 0.8,
-  //     opacity: 1,
-  //     transition: { duration: 0.5 },
-  //   },
-  // };
+    return () => unsubscribe();
+  }, [scrollYProgress, controls, isFixed]);
 
   // useEffect(() => {
-  //   const handleScroll = () => {
-  //     const threshold = 100; // Set a threshold for the sticky effect
-  //     setIsSticky(window.scrollY > threshold);
-  //   };
+  //   scrollYProgress.on("change", (value) => {
+  //     console.log(value); // Now logging the numerical value
+  //     if (value >= 1) {
+  //       console.log(value);
+  //       // Adjust this condition based on when you want the stickiness to trigger
+  //       controls.start({ y: 0, position: "fixed", top: 0 });
+  //     } else {
+  //       controls.start({ y: 0, position: "relative" });
+  //     }
+  //   });
+  // }, [scrollYProgress, controls]);
 
-  //   window.addEventListener("scroll", handleScroll);
-  //   return () => window.removeEventListener("scroll", handleScroll);
-  // }, []);
+  // Define animation variants for sticky and initial state
 
   function checkMobile() {
     setIsMobile(window.innerWidth <= 768);
@@ -233,7 +257,13 @@ export default function Home() {
             </p>
           </div>
           <Sonification />
-          <div ref={logoRef} className={styles.stickyNav}>
+          <motion.div
+            ref={ref}
+            // variants={variants}
+            // initial="initial"
+            animate={controls}
+            // className={`${isFixed ? styles.stickyNav : styles.relative}`}
+          >
             <div
 
             // className={` ${isSticky ? styles.stickyNav : ""}`}
@@ -243,7 +273,11 @@ export default function Home() {
             >
               <div className={styles.legend}>
                 {legendData.map((organism, i) => (
-                  <div key={organism.ferment} className={styles.legendItems}>
+                  <motion.div
+                    key={organism.ferment}
+                    className={styles.legendItems}
+                    whileHover={{ scale: 1.1 }}
+                  >
                     <VoronoiCircles
                       data={organism}
                       circlePolygon={circlePolygon2}
@@ -256,11 +290,11 @@ export default function Home() {
                       <br />
                       {organism.ferment.split(" ").slice(2).join(" ")}
                     </span>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
-          </div>
+          </motion.div>
           <div>
             <h1
               style={{
