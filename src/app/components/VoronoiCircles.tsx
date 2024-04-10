@@ -1,18 +1,22 @@
 "use client";
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { memo, useContext, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { fills } from "../lib/styles/fills";
 import { voronoiTreemap } from "d3-voronoi-treemap";
-import { PlayerContext, IPlayable } from "../lib/utils";
+import { PlayerContext, IPlayable, SPRING } from "../lib/utils";
 import { Player, NoisePlayer } from "./Sonification";
 import * as Tone from "tone";
-
+import { motion, useAnimate, useAnimation } from "framer-motion";
+import styles from "../lib/styles/VoronoiWrapper.module.scss";
 interface VoronoiProps {
   data: any;
   circlePolygon: any;
   legend?: boolean;
   isPlaying: boolean;
   setIsPlaying: (isPlaying: boolean) => void;
+  wh: [string, string];
+  key: string;
+  isFixed?: any;
 }
 
 interface VoronoiNode extends d3.HierarchyNode<any> {
@@ -24,14 +28,54 @@ const Voronoi: React.FC<VoronoiProps> = ({
   circlePolygon,
   legend,
   isPlaying,
+  wh,
+  key,
+  isFixed,
 }) => {
   const ref = useRef<SVGSVGElement | null>(null);
 
   const players = useContext(PlayerContext)?.players;
 
-  const [organisms, setOrganisms] = useState([]);
+  const [isAnimationPlaying, setIsAnimationPlaying] = useState(false);
+
+  const controls = useAnimation();
+
+  const divAnimationVariants = {
+    init: {
+      y: 0,
+    },
+    anim: {
+      y: -20,
+      transition: {
+        type: "tween",
+        repeat: 1,
+        repeatType: "reverse",
+      },
+    },
+  };
 
   const playingSynths = useRef<any[]>([]);
+
+  const startPulsing = () => {
+    controls.start({
+      scale: [1, 1.2, 1],
+      transition: {
+        duration: 0.6,
+        repeat: Infinity,
+        repeatType: "loop",
+        repeatDelay: 1,
+        ease: "easeInOut",
+        type: "spring",
+        stiffness: 100,
+        damping: 10,
+      },
+    });
+  };
+
+  const stopPulsing = () => {
+    controls.stop();
+    controls.set({ scale: 1 }); // Reset scale to normal
+  };
 
   const [playersLoaded, setPlayersLoaded] = useState(false);
   useEffect(() => {
@@ -70,7 +114,6 @@ const Voronoi: React.FC<VoronoiProps> = ({
     const newOrganisms = d.data.children.map((child: { type: string }) =>
       child.type.replace(/ /g, "_")
     );
-    setOrganisms(newOrganisms);
 
     // Stop any currently playing synths before starting new ones
     stopAllSynths();
@@ -100,13 +143,15 @@ const Voronoi: React.FC<VoronoiProps> = ({
 
       const voronoi = svg
         .append("g")
-        .attr(
-          "transform",
-          `translate(${legend ? margin : margin + 30},${margin})`
-        );
+        .attr("transform", `translate(${margin},${margin})`);
 
       const imageSize = 50;
       const defs = svg.append("defs");
+
+      // const content = svg.select("g"); // Assuming 'g' is your main content group
+      // const contentNode = content.node();
+
+      svg.attr("height", wh[0]).attr("width", wh[1]); // Adjust margin or add padding as needed
 
       for (let key in fills) {
         let id = key.replace(/\s+/g, "_");
@@ -181,21 +226,39 @@ const Voronoi: React.FC<VoronoiProps> = ({
 
   return (
     <>
-      <svg ref={ref} />
-      {!legend && (
-        <div
-          style={{
-            position: "absolute",
-            top: "110px",
-            width: "100%",
-            textAlign: "center",
-          }}
-        >
-          {data.ferment}
-        </div>
-      )}
+      <motion.svg
+        // className={isFixed ? styles.sticky : styles.initial}
+        // animate={{ scale: isFixed ? 0.6 : 1 }}
+        // layout
+        // transition={SPRING}
+        // layoutId={key}
+        onHoverStart={() => {
+          if (!isAnimationPlaying) {
+            setIsAnimationPlaying(true);
+            controls.start({
+              scale: 1.2,
+              transition: {
+                type: "tween",
+                repeat: Infinity,
+                repeatType: "reverse",
+                duration: 0.5,
+              },
+            });
+          }
+        }}
+        onHoverEnd={() => {
+          setIsAnimationPlaying(false);
+          controls.start({
+            y: 0,
+            rotate: 0,
+            scale: 1,
+            opacity: 1,
+          });
+        }}
+        ref={ref}
+      />
     </>
   );
 };
 
-export default Voronoi;
+export default memo(Voronoi);

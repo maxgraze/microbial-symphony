@@ -6,6 +6,10 @@
   padding: 6rem;
   font-family: 'Figtree';
   min-height: 100vh;
-  margin: 100px
+  margin: 100px;
 
+}
+
+#nav {
+  background-color: blueviolet;
 }

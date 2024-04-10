@@ -9,46 +9,6 @@ export const PlayerContext = createContext<PlayerContextType | undefined>(
   undefined
 );
 
-export function onSticky(
-  selector: string | HTMLElement,
-  callback: (isSticky: boolean) => void
-) {
-  const element =
-    typeof selector === "string" ? document.querySelector(selector) : selector;
-
-  if (!element) {
-    return;
-  }
-
-  const observer = new IntersectionObserver(
-    ([event]) => callback(event.intersectionRatio < 1),
-    { threshold: [1], rootMargin: "-1px 0px 0px 0px" }
-  );
-  observer.observe(element);
-
-  return { observer, element };
-}
-export function useSticky() {
-  const ref = useRef<HTMLDivElement>(null);
-
-  const [isSticky, setIsSticky] = useState(false);
-
-  useEffect(() => {
-    if (!ref.current) {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      ([event]) => setIsSticky(event.intersectionRatio < 1),
-      { threshold: [1], rootMargin: "-1px 0px 0px 0px" }
-    );
-    observer.observe(ref.current);
-
-    return () => observer.disconnect();
-  }, []);
-
-  return { ref, isSticky };
-}
 export function nFormatter(num: number, digits?: number) {
   if (!num) return "0";
   const lookup = [
@@ -173,3 +133,62 @@ export interface IPlayable {
   play(): void;
   stop(): void;
 }
+
+export const margin = { top: 10, right: 10, bottom: 10, left: 10 };
+
+const height = 1000;
+const width = 1000;
+const columns = 12;
+const cellWidth = (width - margin.left - margin.right) / columns;
+const cellHeight = (height - margin.top - margin.bottom) / columns;
+
+export let circlePolygon = circularPolygon(
+  [cellWidth / 2, cellHeight / 2],
+  Math.min(cellWidth, cellHeight) / 2,
+  100
+);
+const height2 = 200;
+const width2 = 200;
+const columns2 = 5;
+const cellWidth2 = width2 / columns2;
+const cellHeight2 = height2 / columns2;
+
+export let circlePolygon2 = circularPolygon(
+  [cellWidth2 / 2, cellHeight2 / 2],
+  Math.min(cellWidth2, cellHeight2) / 2,
+  100
+);
+
+export const soysauce = {
+  children: [
+    {
+      type: "mold",
+      percentage: 0.3333333333333333,
+      organism: "S. cerevisiae",
+    },
+    {
+      type: "bacilli",
+      percentage: 0.3333333333333333,
+      organism: "Acetobacter",
+    },
+    {
+      type: "yeast",
+      percentage: 0.3333333333333333,
+      organism: "Zygosaccharomy",
+    },
+  ],
+  ferment: "Soy sauce",
+};
+
+export const SPRING = {
+  // type: "spring",
+  // stiffness: 400,
+  // damping: 40,
+  // duration: 2,
+  // staggerChildren: 0.1,
+  type: "spring",
+  stiffness: 100,
+  damping: 10,
+  delayChildren: 0.1,
+  staggerChildren: 0.1,
+};
