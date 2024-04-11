@@ -182,13 +182,14 @@ export const soysauce = {
 
 export const SPRING = {
   // type: "spring",
-  // stiffness: 400,
-  // damping: 40,
+  stiffness: 400,
+  damping: 40,
   // duration: 2,
   // staggerChildren: 0.1,
   type: "spring",
-  stiffness: 100,
-  damping: 10,
-  delayChildren: 0.1,
-  staggerChildren: 0.1,
+  // stiffness: 100,
+  // damping: 10,
+  delay: 0.1,
+  duration: 2,
+  delayChildren: 0.5,
 };

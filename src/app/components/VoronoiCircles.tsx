@@ -6,8 +6,7 @@ import { voronoiTreemap } from "d3-voronoi-treemap";
 import { PlayerContext, IPlayable, SPRING } from "../lib/utils";
 import { Player, NoisePlayer } from "./Sonification";
 import * as Tone from "tone";
-import { motion, useAnimate, useAnimation } from "framer-motion";
-import styles from "../lib/styles/VoronoiWrapper.module.scss";
+import { motion } from "framer-motion";
 interface VoronoiProps {
   data: any;
   circlePolygon: any;
@@ -16,7 +15,6 @@ interface VoronoiProps {
   setIsPlaying: (isPlaying: boolean) => void;
   wh: [string, string];
   key: string;
-  isFixed?: any;
 }
 
 interface VoronoiNode extends d3.HierarchyNode<any> {
@@ -29,53 +27,12 @@ const Voronoi: React.FC<VoronoiProps> = ({
   legend,
   isPlaying,
   wh,
-  key,
-  isFixed,
 }) => {
   const ref = useRef<SVGSVGElement | null>(null);
 
   const players = useContext(PlayerContext)?.players;
 
-  const [isAnimationPlaying, setIsAnimationPlaying] = useState(false);
-
-  const controls = useAnimation();
-
-  const divAnimationVariants = {
-    init: {
-      y: 0,
-    },
-    anim: {
-      y: -20,
-      transition: {
-        type: "tween",
-        repeat: 1,
-        repeatType: "reverse",
-      },
-    },
-  };
-
   const playingSynths = useRef<any[]>([]);
-
-  const startPulsing = () => {
-    controls.start({
-      scale: [1, 1.2, 1],
-      transition: {
-        duration: 0.6,
-        repeat: Infinity,
-        repeatType: "loop",
-        repeatDelay: 1,
-        ease: "easeInOut",
-        type: "spring",
-        stiffness: 100,
-        damping: 10,
-      },
-    });
-  };
-
-  const stopPulsing = () => {
-    controls.stop();
-    controls.set({ scale: 1 }); // Reset scale to normal
-  };
 
   const [playersLoaded, setPlayersLoaded] = useState(false);
   useEffect(() => {
@@ -147,9 +104,6 @@ const Voronoi: React.FC<VoronoiProps> = ({
 
       const imageSize = 50;
       const defs = svg.append("defs");
-
-      // const content = svg.select("g"); // Assuming 'g' is your main content group
-      // const contentNode = content.node();
 
       svg.attr("height", wh[0]).attr("width", wh[1]); // Adjust margin or add padding as needed
 
@@ -227,34 +181,70 @@ const Voronoi: React.FC<VoronoiProps> = ({
   return (
     <>
       <motion.svg
-        // className={isFixed ? styles.sticky : styles.initial}
-        // animate={{ scale: isFixed ? 0.6 : 1 }}
-        // layout
-        // transition={SPRING}
-        // layoutId={key}
-        onHoverStart={() => {
-          if (!isAnimationPlaying) {
-            setIsAnimationPlaying(true);
-            controls.start({
-              scale: 1.2,
-              transition: {
-                type: "tween",
-                repeat: Infinity,
-                repeatType: "reverse",
-                duration: 0.5,
-              },
-            });
-          }
+        initial={{
+          scale: 1, // Initial scale
+          rotate: 0, // Initial rotation
+          filter: "drop-shadow(0 0 5px rgba(255, 255, 224, 0.5))", // Initial drop-shadow
         }}
-        onHoverEnd={() => {
-          setIsAnimationPlaying(false);
-          controls.start({
-            y: 0,
-            rotate: 0,
-            scale: 1,
-            opacity: 1,
-          });
-        }}
+        whileHover={
+          legend
+            ? {
+                scale: [1, 1.2, 1],
+                transition: {
+                  type: "tween",
+                  repeat: Infinity,
+                  ease: "linear",
+
+                  repeatType: "reverse",
+                  duration: 1.5,
+                  stiffnes: 100,
+                  dampness: 40,
+                },
+              }
+            : {
+                scale: [1, 1.2, 1],
+                rotate: [45, 90, 135, 180, 225, 270, 315, 360],
+                filter: [
+                  "drop-shadow(0 0 5px rgba(255, 255, 224, 0.5))",
+                  "drop-shadow(0 0 20px rgba(255, 255, 224, 0.7))",
+                  "drop-shadow(0 0 5px rgba(255, 255, 224, 1)",
+                ],
+                transition: {
+                  type: "tween",
+                  repeat: Infinity,
+                  ease: "linear",
+
+                  repeatType: "reverse",
+                  duration: 2,
+                  stiffnes: 100,
+                  dampness: 40,
+                },
+              }
+        }
+        // onHoverStart={() => {
+        //   if (!isAnimationPlaying) {
+        //     setIsAnimationPlaying(true);
+        //     controls.start({
+        //       scale: 1.2,
+        //       transition: {
+        //         type: "tween",
+        //         repeat: Infinity,
+        //         repeatType: "reverse",
+        //         duration: 0.5,
+        //       },
+        //     });
+        //   }
+        // }}
+        // onHoverEnd={() => {
+        //   // setIsAnimationPlaying(false);
+        //   controls.start({
+        //     // y: 0,
+        //     // rotate: 0,
+        //     scale: 1,
+        //     opacity: 1,
+        //     filter: "revert",
+        //   });
+        // }}
         ref={ref}
       />
     </>

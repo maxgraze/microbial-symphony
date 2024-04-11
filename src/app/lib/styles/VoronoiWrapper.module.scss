@@ -11,7 +11,7 @@
   * {
     // margin-bottom: 20px;
   }
-  font-size: "Figtree";
+  font-family: "Figtree";
 }
 
 .container p,
@@ -22,17 +22,18 @@
 }
 
 .display {
-  // min-height: 100vh; // get rid of this to have the legend on the same view
   text-align: center;
-  padding-top: 20vh;
-  margin-top: 1em;
+  padding-top: 18vh;
   max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
 }
 .voronoiGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(142px, 1fr));
   gap: 20px;
   margin: 0 100px;
+  width: 100%;
 }
 
 .voronoiCell {
@@ -46,12 +47,12 @@
   }
 }
 
-.voronoiGrid:hover > .voronoiCell > svg > g {
-  opacity: 0.5;
-}
-.voronoiGrid:hover > .voronoiCell > svg > g:hover {
-  opacity: 1;
-}
+// .voronoiGrid:hover > .voronoiCell > svg > g {
+//   opacity: 0.5;
+// }
+// .voronoiGrid:hover > .voronoiCell > svg > g:hover {
+//   opacity: 1;
+// }
 
 .link {
   color: black;
@@ -82,6 +83,7 @@
     z-index: -1;
     order: 2;
     width: 90px;
+    display: block;
   }
   @media (max-width: 768px) {
     flex: 0 1 calc(50% - 20px);
@@ -89,8 +91,8 @@
 }
 .legend {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-around;
+  // flex-wrap: wrap;
+  justify-content: center;
   margin: 0px;
 }
 
@@ -119,6 +121,7 @@
     z-index: -1;
     order: 2;
     min-height: 50px;
+    display: block;
   }
 
   @media (max-width: 768px) {
@@ -128,7 +131,6 @@
 
 .switchContainer {
   position: relative;
-  // left: 300px;
   top: 26px;
   width: 336px;
 }
@@ -171,7 +173,8 @@
 
 .soysauceDiv {
   display: flex;
-  margin-bottom: 60px;
+  margin-top: 100px;
+  margin-bottom: 160px;
   flex-direction: column;
   align-items: center;
   gap: 60px;
@@ -200,37 +203,58 @@
 
 .pill {
   display: inline-block;
+  position: relative;
   height: 20px; /* Smaller height for inline display */
   padding: 0px 4px;
   border-radius: 10px; /* Adjust for pill shape, should be half of height */
-  background-size: cover;
-  background-position: center;
+  // background-size: cover;
+  // background-position: center;
+  overflow: visible;
   font-weight: bold;
   color: #424288;
   vertical-align: baseline; /* Keep the pills aligned with the text initially */
-  transition: transform 0.2s ease, margin 0.2s ease;
+  // transition: transform 0.2s ease, margin 0.2s ease;
+  transition: opacity 0.2s ease;
+}
+
+.pill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-size: cover;
+  background-position: center;
+  border-radius: 10px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.pill:hover::after {
+  opacity: 1;
 }
 
 .pill:hover {
   color: transparent;
 }
-.yeast:hover {
+.yeast:hover::after {
   background-image: url("https://raw.githubusercontent.com/infowetrust/albumcolors/master/SVG/Dec.03-1881.12-1.svg");
 }
 
-.mold:hover {
+.mold:hover::after {
   background-image: url("https://raw.githubusercontent.com/infowetrust/albumcolors/master/SVG/Dec.03-1881.12-3.svg");
 }
 
-.lactic_acid_bacteria {
+.lactic_acid_bacteria:hover::after {
   background-image: url("https://raw.githubusercontent.com/infowetrust/albumcolors/master/SVG/Dec.11-1891.14-1.svg");
 }
 
-.acetic_acid_bacteria {
+.acetic_acid_bacteria:hover::after {
   background-image: url("https://raw.githubusercontent.com/infowetrust/albumcolors/master/SVG/Dec.09-1888.27-4.svg");
 }
 
-.bacilli:hover {
+.bacilli:hover::after {
   background-image: url("https://raw.githubusercontent.com/infowetrust/albumcolors/master/SVG/Dec.06-1880.07-1.svg");
 }
 

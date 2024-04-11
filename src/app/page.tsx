@@ -16,7 +16,6 @@ import { explanation } from "./lib/motivation";
 import ReactMarkdown from "react-markdown";
 import VoronoiCircles from "./components/VoronoiCircles";
 import { Drawer, Button } from "antd";
-import Circles from "./components/Circles";
 import {
   motion,
   AnimatePresence,
@@ -44,6 +43,16 @@ export default function Home() {
 
   const [isFixed, setIsFixed] = useState(false); // State to toggle fixed positioning
   const [isDOMReady, setDOMReady] = useState(false);
+  const pageVariants = {
+    normal: { opacity: 1 },
+    dimmed: { opacity: 0.5 },
+  };
+
+  const itemVariants = {
+    normal: { opacity: 0.5 },
+    hovered: { opacity: 1 },
+  };
+
   const controls = useAnimation();
   const id = React.useId();
   useEffect(() => {
@@ -72,7 +81,7 @@ export default function Home() {
     // Additional settings
   });
   const backdropFilter = useTransform(scrollYProgress, [0, 1], ["0px", "20px"]);
-  const legendHeight = useTransform(scrollYProgress, [0, 100], [120, 50]);
+  const legendHeight = useTransform(scrollYProgress, [0, 100], [80, 50]);
 
   const variants = {
     initial: {
@@ -105,8 +114,9 @@ export default function Home() {
   };
 
   const animateTo = {
-    y: -10, // Adjust the movement distance as needed
-    transition: { type: "spring", stiffness: 100, damping: 10 },
+    // y: -10, // Adjust the movement distance as needed
+    transition: { SPRING },
+    scale: 0.6,
   };
 
   const elementTop = ref.current ? ref.current.getBoundingClientRect().top : 0;
@@ -119,9 +129,9 @@ export default function Home() {
     if (latest > previous && currentScrollY >= elementTop - 100 && !isFixed) {
       controls.start({
         position: "fixed",
-        top: -10,
+        top: 10,
         zIndex: 1000,
-        scale: 0.6,
+        // scale: 0.6,
         // display: "flex",
         // alignItems: "center",
         // justifyContent: "center",
@@ -129,7 +139,8 @@ export default function Home() {
         // backgroundColor: "#e3e3e7",
         backdropFilter: "blur(15px)",
         borderRadius: "8px",
-        transition: SPRING,
+        opacity: 1,
+        // transition: SPRING,
 
         //   // transition: { duration: 1 },
         //   // delay: stagger(0.05),
@@ -238,7 +249,6 @@ export default function Home() {
     setShowDrawer(false);
   };
 
-  console.log(isFixed);
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -255,7 +265,7 @@ export default function Home() {
       Sorry! This experience is currently only available on desktop.
     </div>
   ) : (
-    <main>
+    <main className={styles.container}>
       {/* <Drawer
         title="Sound Preference"
         placement="bottom"
@@ -287,7 +297,13 @@ export default function Home() {
       <PlayerContext.Provider value={value}>
         <Sonification />
 
-        <motion.div ref={pageRef} layoutRoot className={styles.container}>
+        <motion.div
+          ref={pageRef}
+          layout={true}
+          // initial="normal"
+          // animate={isPlaying ? "dimmed" : "normal"}
+          // variants={pageVariants}
+        >
           <div className={styles.display}>
             <h1
               style={{
@@ -337,19 +353,21 @@ export default function Home() {
               // variants={variants}
               // initial="initial"
 
-              layout="position"
+              // layout
               // className={isFixed ? styles.sticky : styles.initial}
 
               style={{
                 backdropFilter,
                 height: legendHeight,
+                // height: isFixed ? "80px" : "120px",
+
                 // position: "sticky",
                 // position: "relative",
                 // top: -10,
                 // zIndex: 1000,
-                width: "100%",
                 // scale: 0.6,
               }}
+              transition={SPRING}
               // id="nav"
               animate={controls}
               // className={`${isFixed ? styles.stickyNav : styles.relative}`}
@@ -361,17 +379,19 @@ export default function Home() {
                   return (
                     <motion.div
                       ref={ref}
-                      layout="size"
+                      layout="position"
                       // variants={childVariants}
                       layoutId={layoutId}
                       key={layoutId}
-                      animate={animateTo}
+                      animate={{ scale: isFixed ? 0.6 : 1 }}
                       // transition={SPRING}
-                      // transition={{
-                      //   type: "spring",
-                      //   stiffness: 400,
-                      //   damping: 40 + i * 5,
-                      // }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 400,
+                        damping: 40 + i * 10,
+                        delay: 0.1,
+                        duration: 2,
+                      }}
                       className={
                         !isFixed ? styles.legendItems : styles.fixedLegendItems
                       }
@@ -380,18 +400,12 @@ export default function Home() {
                         wh={["50px", "50px"]}
                         data={organism}
                         key={layoutId}
-                        isFixed={isFixed}
                         circlePolygon={circlePolygon2}
                         legend={true}
                         isPlaying={isPlaying}
                         setIsPlaying={setIsPlaying}
                       />
-                      <span>
-                        {organism.ferment}
-                        {/* {organism.ferment.split(" ").slice(0, 2).join(" ")} */}
-                        {/* <br /> */}
-                        {/* {organism.ferment.split(" ").slice(2).join(" ")} */}
-                      </span>
+                      <span>{organism.ferment}</span>
                     </motion.div>
                   );
                 })}
@@ -400,11 +414,32 @@ export default function Home() {
             <p
               style={{
                 fontSize: "1em",
+                marginTop: "100px",
+                width: "50%",
               }}
             >
               {" "}
-              These five microorganisms are the most prevelant types in
-              fermentations.
+              <b>
+                These five microorganisms are the most prevelant types in
+                fermentation.{" "}
+              </b>
+              <br />
+              <br /> Imagine you are sitting alongside the Seine canal in Paris,
+              enjoying an aperatif in the gentle warmth of the sun: you picked
+              out a crusty baguette, risen with{" "}
+              <span className={`${styles.pill} ${styles.yeast}`}>yeast,</span>
+              topped it with rich brie—its creamy tang courtesy of
+              <span className={`${styles.pill} ${styles.lactic_acid_bacteria}`}>
+                lactic acid bacteria,
+              </span>{" "}
+              and protective layer of{" "}
+              <span className={`${styles.pill} ${styles.mold}`}>mold</span>
+              Alongside, you savor cornichons, their satisfying crunch and
+              tartness, brought to you by
+              <span className={`${styles.pill} ${styles.acetic_acid_bacteria}`}>
+                acetic acid bacteria.
+              </span>
+              <br />
               <br />
               They are our unseen collaborators of fermentation and flavor.
             </p>
@@ -485,7 +520,14 @@ export default function Home() {
             ))}
         </div>
       </PlayerContext.Provider>
-      <div>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "40px",
+          margin: "60px 0px 60px",
+        }}
+      >
         <h1 style={{ fontFamily: "Margo Condensed" }}>Motivation</h1>
         <div style={{ lineHeight: "1.66em", width: "50%", fontSize: "16px" }}>
           <ReactMarkdown
@@ -504,8 +546,8 @@ export default function Home() {
           </ReactMarkdown>
         </div>
       </div>
-      <div style={{ float: "right", fontSize: "10px" }}>
-        © 2023 <a href="http://www.datagrazing.com">Max Graze</a>
+      <div>
+        © 2023 &nbsp; <a href="http://www.datagrazing.com"> Max Graze</a>
       </div>
     </main>
   );
