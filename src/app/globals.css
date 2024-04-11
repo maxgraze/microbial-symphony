@@ -101,7 +101,7 @@ main {  font-family: 'FigTree', sans-serif;
 html,
 body {
   max-width: 100vw;
-  overflow-x: hidden;
+  /* overflow-x: hidden; */
   font-family: 'FigTree', sans-serif;
   color: #232b2b
 

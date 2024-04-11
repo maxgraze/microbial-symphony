@@ -13,7 +13,8 @@
     "d3": "^7.8.5",
     "d3-voronoi-map": "^2.1.1",
     "d3-voronoi-treemap": "^1.1.2",
-    "next": "^14.0.4",
+    "framer-motion": "^11.0.24",
+    "next": "^14.1.4",
     "react": "^18",
     "react-dom": "^18",
     "react-markdown": "^9.0.1",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@types/d3": "^7.4.3",
+    "@types/gsap": "^3.0.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

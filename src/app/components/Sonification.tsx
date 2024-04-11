@@ -82,7 +82,7 @@ export class Player implements IPlayable {
 
   playNoteSequence(): void {
     let note = this.notes[this.index++ % this.notes.length];
-    this.synth.triggerAttackRelease(note, this.release);
+    this.synth.triggerAttackRelease(note, this.release, "+0.1");
     // Schedule the next note
     this.timeoutId = setTimeout(() => {
       this.playNoteSequence(); // Continue playing the next note in sequence
@@ -178,7 +178,7 @@ const Sonification = () => {
         });
 
         let yeast_delay = new Tone.PingPongDelay({
-          delayTime: "4n",
+          delayTime: "8n",
           feedback: 0.2,
           wet: 0.2,
         });
@@ -210,7 +210,7 @@ const Sonification = () => {
         const AAB_synth = new Tone.MonoSynth({
           oscillator: { type: "triangle" },
           envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 1 },
-          volume: -4,
+          volume: -6,
         }).toDestination();
 
         // AAB_synth.chain(mold_volume, Tone.Destination);
@@ -218,7 +218,7 @@ const Sonification = () => {
         const bacilli_synth = new Tone.MonoSynth({
           oscillator: { type: "sine" },
           envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 1 },
-          volume: -4,
+          volume: -6,
         }).toDestination();
 
         const LAB_synth = new Tone.MonoSynth({

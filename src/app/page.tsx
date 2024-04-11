@@ -1,18 +1,31 @@
 "use client";
 import styles from "./lib/styles/VoronoiWrapper.module.scss";
 import "./page.module.css";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FermentData,
-  circularPolygon,
+  circlePolygon,
+  circlePolygon2,
   legendData,
   PlayerContext,
+  soysauce,
+  SPRING,
 } from "./lib/utils";
 import dynamic from "next/dynamic";
 import { explanation } from "./lib/motivation";
 import ReactMarkdown from "react-markdown";
 import VoronoiCircles from "./components/VoronoiCircles";
 import { Drawer, Button } from "antd";
+import {
+  motion,
+  useInView,
+  useScroll,
+  useAnimation,
+  useTransform,
+  useMotionValueEvent,
+  LayoutGroup,
+} from "framer-motion";
+import React from "react";
 
 const Sonification = dynamic(() => import("./components/Sonification"), {
   ssr: false, // Disable server-side rendering for Sonification
@@ -23,8 +36,62 @@ export default function Home() {
   const [data, setData] = useState<FermentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true); //change to false
   const [showDrawer, setShowDrawer] = useState(false);
+
+  const [isFixed, setIsFixed] = useState(false); // State to toggle fixed positioning
+  const [isDOMReady, setDOMReady] = useState(false);
+
+  const controls = useAnimation();
+  const id = React.useId();
+  useEffect(() => {
+    // This simply waits for the next tick of the event loop, after the DOM updates.
+    requestAnimationFrame(() => setDOMReady(true));
+  }, []);
+  const ref = useRef<HTMLDivElement>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
+  const scrollSettings = isDOMReady ? { target: ref } : { target: undefined };
+  const value = useMemo(
+    () => ({
+      players,
+      setPlayers,
+    }),
+    [players]
+  );
+
+  const { scrollYProgress } = useScroll({
+    ...scrollSettings,
+    offset: ["start start", "end start"],
+  });
+
+  const { scrollY } = useScroll({
+    ...scrollSettings,
+  });
+
+  const backdropFilter = useTransform(scrollYProgress, [0, 1], ["0px", "20px"]);
+  const legendHeight = useTransform(scrollYProgress, [0, 100], [80, 50]);
+
+  const elementTop = ref.current ? ref.current.getBoundingClientRect().top : 0;
+
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    const previous = scrollYProgress.getPrevious() || 0;
+
+    const currentScrollY = scrollY.get(); // Use get() instead of .current
+
+    if (latest > previous && currentScrollY >= elementTop - 100 && !isFixed) {
+      controls.start({
+        position: "fixed",
+        top: 10,
+        zIndex: 1000,
+
+        backdropFilter: "blur(15px)",
+        borderRadius: "8px",
+        opacity: 1,
+      });
+
+      setIsFixed(true);
+    }
+  });
 
   function checkMobile() {
     setIsMobile(window.innerWidth <= 768);
@@ -55,35 +122,19 @@ export default function Home() {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          marginTop: "100px",
+        }}
+      >
+        The moment that it takes to you read this sentence...
+      </div>
+    );
   }
 
-  const margin = { top: 10, right: 10, bottom: 10, left: 10 };
-
-  const height = 1000;
-  const width = 1000;
-  const columns = 12;
-  const cellWidth = (width - margin.left - margin.right) / columns;
-  const cellHeight = (height - margin.top - margin.bottom) / columns;
-
-  let circlePolygon = circularPolygon(
-    [cellWidth / 2, cellHeight / 2],
-    Math.min(cellWidth, cellHeight) / 2,
-    100
-  );
-  const height2 = 200;
-  const width2 = 200;
-  const columns2 = 5;
-  const cellWidth2 = width2 / columns2;
-  const cellHeight2 = height2 / columns2;
-
-  let circlePolygon2 = circularPolygon(
-    [cellWidth2 / 2, cellHeight2 / 2],
-    Math.min(cellWidth2, cellHeight2) / 2,
-    100
-  );
-
-  const value = { players, setPlayers };
   return isMobile ? (
     <div
       style={{
@@ -96,7 +147,7 @@ export default function Home() {
       Sorry! This experience is currently only available on desktop.
     </div>
   ) : (
-    <main>
+    <main className={styles.container}>
       <Drawer
         title="Sound Preference"
         placement="bottom"
@@ -125,132 +176,231 @@ export default function Home() {
           <Button onClick={handleDisableSound}>Without Sound</Button>
         </div>
       </Drawer>
-      <div className={styles.container}>
-        <PlayerContext.Provider value={value}>
-          <div>
+      <PlayerContext.Provider value={value}>
+        <Sonification />
+
+        <motion.div ref={pageRef} layout={true}>
+          <div className={styles.display}>
             <h1
               style={{
                 fontFamily: "Margo Condensed",
-                fontSize: "3.5em",
-                marginTop: "60px",
-                marginBottom: "40px",
+                fontSize: "8em",
+                paddingBottom: "20px",
               }}
             >
               Microbial Symphony
             </h1>
-
-            <div
+            <p
               style={{
-                alignItems: "flex-start",
-                paddingRight: "20px",
-                display: "flex",
-                paddingTop: "60px",
+                fontSize: "1.3em",
+                marginTop: " 20px",
               }}
             >
-              <div>
+              {" "}
+              Uncover the symphony of microorganisms hidden within your favorite
+              foods.
+            </p>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "40px",
+            }}
+          >
+            <p
+              style={{
+                fontSize: "1em",
+
+                marginTop: " 20px",
+              }}
+            >
+              {" "}
+              Hover over a circle.
+            </p>
+
+            <motion.div
+              style={{
+                backdropFilter,
+                height: legendHeight,
+              }}
+              transition={SPRING}
+              animate={controls}
+              className={styles.legend}
+            >
+              <LayoutGroup>
+                {legendData.map((organism, i) => {
+                  const layoutId = `${id}-${i}`;
+                  return (
+                    <motion.div
+                      ref={ref}
+                      layout="position"
+                      layoutId={layoutId}
+                      key={layoutId}
+                      animate={{ scale: isFixed ? 0.6 : 1 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 400,
+                        damping: 40 + i * 10,
+                        delay: 0.1,
+                        duration: 2,
+                      }}
+                      className={
+                        !isFixed ? styles.legendItems : styles.fixedLegendItems
+                      }
+                    >
+                      <VoronoiCircles
+                        wh={["50px", "50px"]}
+                        data={organism}
+                        key={layoutId}
+                        circlePolygon={circlePolygon2}
+                        legend={true}
+                        isPlaying={isPlaying}
+                        setIsPlaying={setIsPlaying}
+                      />
+                      <span>{organism.ferment}</span>
+                    </motion.div>
+                  );
+                })}
+              </LayoutGroup>
+            </motion.div>
+            <p
+              style={{
+                fontSize: "1em",
+                marginTop: "100px",
+                width: "50%",
+              }}
+            >
+              {" "}
+              <b>
+                These five microorganisms are the most prevelant types in
+                fermentation.{" "}
+              </b>
+              <br />
+              <br /> Imagine you are sitting alongside the Seine canal in Paris,
+              enjoying an aperatif in the gentle warmth of the sun: you picked
+              out a crusty baguette, risen with{" "}
+              <span className={`${styles.pill} ${styles.yeast}`}>yeast,</span>
+              topped it with rich brie—its creamy tang courtesy of
+              <span className={`${styles.pill} ${styles.lactic_acid_bacteria}`}>
+                lactic acid bacteria,
+              </span>{" "}
+              and protective layer of{" "}
+              <span className={`${styles.pill} ${styles.mold}`}>mold</span>
+              Alongside, you savor cornichons, their satisfying crunch and
+              tartness, brought to you by
+              <span className={`${styles.pill} ${styles.acetic_acid_bacteria}`}>
+                acetic acid bacteria.
+              </span>
+              <br />
+              <br />
+              They are our unseen collaborators of fermentation and flavor.
+            </p>
+          </div>
+          <div className={styles.soysauceDiv}>
+            <h1
+              style={{
+                fontSize: "2em",
+              }}
+            >
+              What does soy sauce sound like?
+            </h1>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "40px",
+              }}
+            >
+              {soysauce && (
                 <div
                   style={{
-                    paddingRight: "42px",
+                    transform: "scale(1.4)",
                   }}
                 >
-                  <h2
-                    style={{
-                      fontFamily: "Figtree",
-                      fontSize: "1.5em",
-                    }}
-                  >
-                    Uncover the symphony of microorganisms hidden within your
-                    favorite foods by hovering over a circle.
-                  </h2>
-                  <p
-                    style={{
-                      fontFamily: "Figtree",
-                      marginBottom: "40px",
-                      lineHeight: "1.66em",
-                      // paddingRight: "600px",
-                    }}
-                  >
-                    As complex fungi, yeast & molds are attributed more complex
-                    sounds over their bacteria counterparts, lactic acid,
-                    bacilli, and acetic acid. Together, these five constitute
-                    the core fermentation microorganisms.
-                  </p>
-                </div>
-                {/* <div className={styles.switchContainer}>
-                  <div className={styles.switchText}>Click to allow audio</div>
-                  <Switch
-                    onChange={toggleAudio}
-                    checkedChildren={<AudioOutlined />}
-                    unCheckedChildren={<AudioMutedOutlined />}
-                    className={isPlaying ? styles.checked : styles.disabled}
-                  />
-                  <span className={styles.arrow}> &#10550;</span>
-                </div> */}
-              </div>
-              <Sonification />
-              <div className={styles.legend}>
-                <div>
-                  {legendData &&
-                    legendData.map((organism, i) => (
-                      <div
-                        key={organism.ferment}
-                        className={styles.legendItems}
-                      >
-                        <VoronoiCircles
-                          data={organism}
-                          circlePolygon={circlePolygon2}
-                          legend={true}
-                          isPlaying={isPlaying}
-                          setIsPlaying={setIsPlaying}
-                        />
-                        <span>
-                          {organism.ferment.split(" ").slice(0, 2).join(" ")}
-                          <br />
-                          {organism.ferment.split(" ").slice(2).join(" ")}
-                        </span>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className={styles.voronoiGrid}>
-            {data &&
-              data.map((data, i) => (
-                <div key={i} className={styles.voronoiCell}>
                   <VoronoiCircles
-                    data={data}
-                    key={i}
+                    wh={["100px", "100px"]}
+                    key={"example-1"}
+                    data={soysauce}
                     circlePolygon={circlePolygon}
                     isPlaying={isPlaying}
                     setIsPlaying={setIsPlaying}
                   />
                 </div>
-              ))}
+              )}
+              <p style={{ width: "30%", letterSpacing: " 0.1em" }}>
+                It&apos;s three main microorganism types,
+                <span className={`${styles.pill} ${styles.yeast}`}>yeast,</span>
+                <span className={`${styles.pill} ${styles.mold}`}>mold</span>
+                and
+                <span className={`${styles.pill} ${styles.bacilli}`}>
+                  bacilli,{" "}
+                </span>
+                come together to create the rich, salty, umami taste-harmony we
+                know as soy sauce.
+              </p>
+            </div>
           </div>
-        </PlayerContext.Provider>
-        <div>
-          <h1 style={{ fontFamily: "Margo Condensed" }}>Motivation</h1>
-          <div style={{ lineHeight: "1.66em", width: "50%", fontSize: "16px" }}>
-            <ReactMarkdown
-              components={{
-                a: ({ node, ...props }) => (
-                  <a
-                    className={styles.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    {...props}
+        </motion.div>
+        <h1
+          style={{
+            textAlign: "center",
+            marginBottom: "40px",
+
+            fontSize: "2em",
+          }}
+        >
+          Explore the melody of other ferments below.
+        </h1>
+        <div className={styles.voronoiGrid}>
+          {data &&
+            data.map((data, i) => (
+              <>
+                <div key={i} className={styles.voronoiCell}>
+                  <VoronoiCircles
+                    wh={["100px", "100px"]}
+                    data={data}
+                    key={i.toString()}
+                    circlePolygon={circlePolygon}
+                    isPlaying={isPlaying}
+                    setIsPlaying={setIsPlaying}
                   />
-                ),
-              }}
-            >
-              {explanation}
-            </ReactMarkdown>
-          </div>
+                  <span>{(data as any).ferment}</span>
+                </div>
+              </>
+            ))}
         </div>
-        <div style={{ float: "right", fontSize: "10px" }}>
-          © 2023 <a href="http://www.datagrazing.com">Max Graze</a>
+      </PlayerContext.Provider>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "40px",
+          margin: "60px 0px 60px",
+        }}
+      >
+        <h1 style={{ fontFamily: "Margo Condensed" }}>Motivation</h1>
+        <div style={{ lineHeight: "1.66em", width: "50%", fontSize: "16px" }}>
+          <ReactMarkdown
+            components={{
+              a: ({ node, ...props }) => (
+                <a
+                  className={styles.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  {...props}
+                />
+              ),
+            }}
+          >
+            {explanation}
+          </ReactMarkdown>
         </div>
+      </div>
+      <div>
+        © 2023 &nbsp; <a href="http://www.datagrazing.com"> Max Graze</a>
       </div>
     </main>
   );

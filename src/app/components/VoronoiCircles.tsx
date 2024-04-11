@@ -1,18 +1,20 @@
 "use client";
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { memo, useContext, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { fills } from "../lib/styles/fills";
 import { voronoiTreemap } from "d3-voronoi-treemap";
-import { PlayerContext, IPlayable } from "../lib/utils";
+import { PlayerContext, IPlayable, SPRING } from "../lib/utils";
 import { Player, NoisePlayer } from "./Sonification";
 import * as Tone from "tone";
-
+import { motion } from "framer-motion";
 interface VoronoiProps {
   data: any;
   circlePolygon: any;
   legend?: boolean;
   isPlaying: boolean;
   setIsPlaying: (isPlaying: boolean) => void;
+  wh: [string, string];
+  key: string;
 }
 
 interface VoronoiNode extends d3.HierarchyNode<any> {
@@ -24,12 +26,11 @@ const Voronoi: React.FC<VoronoiProps> = ({
   circlePolygon,
   legend,
   isPlaying,
+  wh,
 }) => {
   const ref = useRef<SVGSVGElement | null>(null);
 
   const players = useContext(PlayerContext)?.players;
-
-  const [organisms, setOrganisms] = useState([]);
 
   const playingSynths = useRef<any[]>([]);
 
@@ -70,7 +71,6 @@ const Voronoi: React.FC<VoronoiProps> = ({
     const newOrganisms = d.data.children.map((child: { type: string }) =>
       child.type.replace(/ /g, "_")
     );
-    setOrganisms(newOrganisms);
 
     // Stop any currently playing synths before starting new ones
     stopAllSynths();
@@ -100,13 +100,12 @@ const Voronoi: React.FC<VoronoiProps> = ({
 
       const voronoi = svg
         .append("g")
-        .attr(
-          "transform",
-          `translate(${legend ? margin : margin + 30},${margin})`
-        );
+        .attr("transform", `translate(${margin},${margin})`);
 
       const imageSize = 50;
       const defs = svg.append("defs");
+
+      svg.attr("height", wh[0]).attr("width", wh[1]); // Adjust margin or add padding as needed
 
       for (let key in fills) {
         let id = key.replace(/\s+/g, "_");
@@ -181,21 +180,75 @@ const Voronoi: React.FC<VoronoiProps> = ({
 
   return (
     <>
-      <svg ref={ref} />
-      {!legend && (
-        <div
-          style={{
-            position: "absolute",
-            top: "110px",
-            width: "100%",
-            textAlign: "center",
-          }}
-        >
-          {data.ferment}
-        </div>
-      )}
+      <motion.svg
+        initial={{
+          scale: 1, // Initial scale
+          rotate: 0, // Initial rotation
+          filter: "drop-shadow(0 0 5px rgba(255, 255, 224, 0.5))", // Initial drop-shadow
+        }}
+        whileHover={
+          legend
+            ? {
+                scale: [1, 1.2, 1],
+                transition: {
+                  type: "tween",
+                  repeat: Infinity,
+                  ease: "linear",
+
+                  repeatType: "reverse",
+                  duration: 1.5,
+                  stiffnes: 100,
+                  dampness: 40,
+                },
+              }
+            : {
+                scale: [1, 1.2, 1],
+                rotate: [45, 90, 135, 180, 225, 270, 315, 360],
+                filter: [
+                  "drop-shadow(0 0 5px rgba(255, 255, 224, 0.5))",
+                  "drop-shadow(0 0 20px rgba(255, 255, 224, 0.7))",
+                  "drop-shadow(0 0 5px rgba(255, 255, 224, 1)",
+                ],
+                transition: {
+                  type: "tween",
+                  repeat: Infinity,
+                  ease: "linear",
+
+                  repeatType: "reverse",
+                  duration: 2,
+                  stiffnes: 100,
+                  dampness: 40,
+                },
+              }
+        }
+        // onHoverStart={() => {
+        //   if (!isAnimationPlaying) {
+        //     setIsAnimationPlaying(true);
+        //     controls.start({
+        //       scale: 1.2,
+        //       transition: {
+        //         type: "tween",
+        //         repeat: Infinity,
+        //         repeatType: "reverse",
+        //         duration: 0.5,
+        //       },
+        //     });
+        //   }
+        // }}
+        // onHoverEnd={() => {
+        //   // setIsAnimationPlaying(false);
+        //   controls.start({
+        //     // y: 0,
+        //     // rotate: 0,
+        //     scale: 1,
+        //     opacity: 1,
+        //     filter: "revert",
+        //   });
+        // }}
+        ref={ref}
+      />
     </>
   );
 };
 
-export default Voronoi;
+export default memo(Voronoi);
