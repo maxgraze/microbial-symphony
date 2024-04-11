@@ -18,13 +18,11 @@ import VoronoiCircles from "./components/VoronoiCircles";
 import { Drawer, Button } from "antd";
 import {
   motion,
-  AnimatePresence,
   useInView,
   useScroll,
   useAnimation,
   useTransform,
   useMotionValueEvent,
-  useAnimate,
   LayoutGroup,
 } from "framer-motion";
 import React from "react";
@@ -43,15 +41,6 @@ export default function Home() {
 
   const [isFixed, setIsFixed] = useState(false); // State to toggle fixed positioning
   const [isDOMReady, setDOMReady] = useState(false);
-  const pageVariants = {
-    normal: { opacity: 1 },
-    dimmed: { opacity: 0.5 },
-  };
-
-  const itemVariants = {
-    normal: { opacity: 0.5 },
-    hovered: { opacity: 1 },
-  };
 
   const controls = useAnimation();
   const id = React.useId();
@@ -73,51 +62,14 @@ export default function Home() {
   const { scrollYProgress } = useScroll({
     ...scrollSettings,
     offset: ["start start", "end start"],
-    // Potentially other settings that are conditional
   });
 
   const { scrollY } = useScroll({
     ...scrollSettings,
-    // Additional settings
   });
+
   const backdropFilter = useTransform(scrollYProgress, [0, 1], ["0px", "20px"]);
   const legendHeight = useTransform(scrollYProgress, [0, 100], [80, 50]);
-
-  const variants = {
-    initial: {
-      scale: 1,
-      // position: "relative",
-      top: "0px",
-      zIndex: "auto",
-      width: "initial",
-    },
-    sticky: {
-      scale: 0.6,
-      opacity: 1,
-      backgroundColor: "rgba(255, 255, 255, 0.5)",
-      // backdropFilter: backdropFilter,
-    },
-  };
-
-  const childVariants = {
-    visible: {
-      y: -20, // Adjust based on how far you want to move them up
-      opacity: 1,
-      transition: {
-        y: { stiffness: 1000, velocity: -100 },
-      },
-    },
-    initial: {
-      y: 0,
-      opacity: 0.5,
-    },
-  };
-
-  const animateTo = {
-    // y: -10, // Adjust the movement distance as needed
-    transition: { SPRING },
-    scale: 0.6,
-  };
 
   const elementTop = ref.current ? ref.current.getBoundingClientRect().top : 0;
 
@@ -131,95 +83,15 @@ export default function Home() {
         position: "fixed",
         top: 10,
         zIndex: 1000,
-        // scale: 0.6,
-        // display: "flex",
-        // alignItems: "center",
-        // justifyContent: "center",
-        // y: 0,
-        // backgroundColor: "#e3e3e7",
+
         backdropFilter: "blur(15px)",
         borderRadius: "8px",
         opacity: 1,
-        // transition: SPRING,
-
-        //   // transition: { duration: 1 },
-        //   // delay: stagger(0.05),
-        //   // at: "-0.1",
       });
 
       setIsFixed(true);
     }
-    //   if (previous > latest && currentScrollY >= elementTop && isFixed)
-    //     controls.start({
-    //       y: 0, // Ensure y is reset to initial value for consistent behavior
-    //       position: "relative",
-    //       top: "0px", // Explicitly set to "0px" or remove this line if "initial" doesn't work as expected
-    //       zIndex: "auto",
-    //       width: "initial",
-    //       scale: 1,
-    //       transition: { duration: 1 },
-    //     });
-    //   setIsFixed(false);
-
-    //   console.log("scrollY", scrollY);
   });
-
-  // console.log("elementTop", elementTop);
-  // useEffect(() => {
-  //   const initialTop = ref.current ? ref.current.offsetTop : 0;
-
-  //   const calculateProgress = () => {
-  //     const elementScroll = elementTop - window.scrollY;
-  //     const shouldBeFixed = elementScroll <= 0;
-
-  //     if (shouldBeFixed !== isFixed) {
-  //       setIsFixed(shouldBeFixed);
-  //       if (shouldBeFixed) {
-  //         controls.start({
-  //           position: "fixed",
-  //           top: -10,
-  //           zIndex: 1000,
-  //           width: "100%",
-  //           scale: 0.6,
-  //           transition: { duration: 1 },
-  //         });
-  //       }
-  //     }
-  //     // else {
-  //     //   console.log("else");
-  //     //   controls.start({
-  //     //     y: 0, // Ensure y is reset to initial value for consistent behavior
-  //     //     position: "relative",
-  //     //     top: "0px", // Explicitly set to "0px" or remove this line if "initial" doesn't work as expected
-  //     //     zIndex: "auto",
-  //     //     width: "initial",
-  //     //     scale: 1,
-  //     //     transition: { duration: 1 },
-  //     //   });
-  //     // }
-  //   };
-
-  //   // This subscribes to changes and calls calculateProgress accordingly.
-  //   const unsubscribe = scrollYProgress.on("change", calculateProgress);
-
-  //   // Cleanup function to unsubscribe from scrollYProgress changes.
-  //   return () => unsubscribe();
-  // }, [scrollYProgress, controls, isFixed]);
-
-  // useEffect(() => {
-  //   scrollYProgress.on("change", (value) => {
-  //     console.log(value); // Now logging the numerical value
-  //     if (value >= 1) {
-  //       console.log(value);
-  //       // Adjust this condition based on when you want the stickiness to trigger
-  //       controls.start({ y: 0, position: "fixed", top: 0 });
-  //     } else {
-  //       controls.start({ y: 0, position: "relative" });
-  //     }
-  //   });
-  // }, [scrollYProgress, controls]);
-
-  // Define animation variants for sticky and initial state
 
   function checkMobile() {
     setIsMobile(window.innerWidth <= 768);
@@ -250,7 +122,17 @@ export default function Home() {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          marginTop: "100px",
+        }}
+      >
+        The moment that it takes to you read this sentence...
+      </div>
+    );
   }
 
   return isMobile ? (
@@ -266,7 +148,7 @@ export default function Home() {
     </div>
   ) : (
     <main className={styles.container}>
-      {/* <Drawer
+      <Drawer
         title="Sound Preference"
         placement="bottom"
         closable={false}
@@ -293,17 +175,11 @@ export default function Home() {
           </Button>
           <Button onClick={handleDisableSound}>Without Sound</Button>
         </div>
-      </Drawer> */}
+      </Drawer>
       <PlayerContext.Provider value={value}>
         <Sonification />
 
-        <motion.div
-          ref={pageRef}
-          layout={true}
-          // initial="normal"
-          // animate={isPlaying ? "dimmed" : "normal"}
-          // variants={pageVariants}
-        >
+        <motion.div ref={pageRef} layout={true}>
           <div className={styles.display}>
             <h1
               style={{
@@ -343,34 +219,14 @@ export default function Home() {
               {" "}
               Hover over a circle.
             </p>
-            {/* <motion.div
-              className={styles.legend}
-              animate={{}}
-              transition={SPRING}
-            > */}
+
             <motion.div
-              // ref={ref}
-              // variants={variants}
-              // initial="initial"
-
-              // layout
-              // className={isFixed ? styles.sticky : styles.initial}
-
               style={{
                 backdropFilter,
                 height: legendHeight,
-                // height: isFixed ? "80px" : "120px",
-
-                // position: "sticky",
-                // position: "relative",
-                // top: -10,
-                // zIndex: 1000,
-                // scale: 0.6,
               }}
               transition={SPRING}
-              // id="nav"
               animate={controls}
-              // className={`${isFixed ? styles.stickyNav : styles.relative}`}
               className={styles.legend}
             >
               <LayoutGroup>
@@ -380,11 +236,9 @@ export default function Home() {
                     <motion.div
                       ref={ref}
                       layout="position"
-                      // variants={childVariants}
                       layoutId={layoutId}
                       key={layoutId}
                       animate={{ scale: isFixed ? 0.6 : 1 }}
-                      // transition={SPRING}
                       transition={{
                         type: "spring",
                         stiffness: 400,
@@ -455,7 +309,6 @@ export default function Home() {
             <div
               style={{
                 display: "flex",
-                /* width: 40%, */
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "40px",
