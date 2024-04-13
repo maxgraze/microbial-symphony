@@ -18,7 +18,6 @@ import VoronoiCircles from "./components/VoronoiCircles";
 import { Drawer, Button } from "antd";
 import {
   motion,
-  useInView,
   useScroll,
   useAnimation,
   useTransform,
@@ -212,7 +211,7 @@ export default function Home() {
             <p
               style={{
                 fontSize: "1em",
-
+                fontStyle: "italic",
                 marginTop: " 20px",
               }}
             >
