@@ -1,7 +1,7 @@
 "use client";
 import styles from "./lib/styles/VoronoiWrapper.module.scss";
 import "./page.module.css";
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   circlePolygon,
   legendData,
@@ -10,7 +10,7 @@ import {
   containerVariants,
   childVariants,
 } from "./lib/utils";
-import { AppState, FermentData, FermentDataItem } from "./lib/types";
+import { FermentData, FermentDataItem } from "./lib/types";
 import dynamic from "next/dynamic";
 import { explanation } from "./lib/motivation";
 import ReactMarkdown from "react-markdown";
@@ -19,19 +19,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import React from "react";
 import SoundPreferenceDrawer from "./components/SoundPreferenceDrawer";
 import Legend from "./components/Legend";
-import { appReducer } from "./lib/state";
-
-const initialState: AppState = {
-  isLoading: true,
-  data: [],
-  displayData: [],
-  isMobile: false,
-  isPlaying: true,
-  showDrawer: false,
-  isFixed: false,
-  isDOMReady: false,
-  activeItem: null,
-};
 
 const Sonification = dynamic(() => import("./components/Sonification"), {
   ssr: false, // Disable server-side rendering for Sonification
@@ -44,7 +31,6 @@ export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true); //change to false
   const [showDrawer, setShowDrawer] = useState(false);
-  const [state, dispatch] = useReducer(appReducer, initialState);
 
   const [isFixed, setIsFixed] = useState(false); // State to toggle fixed positioning
   const [isDOMReady, setDOMReady] = useState(false);
@@ -68,11 +54,11 @@ export default function Home() {
     setDisplayData(filteredData);
   }, [filteredData]);
 
-  // const handleLegendClick = (legendItem: FermentDataItem) => {
-  //   const newActiveItem =
-  //     legendItem.ferment === activeItem ? null : legendItem.ferment;
-  //   setActiveItem(newActiveItem);
-  // };
+  const handleLegendClick = (legendItem: FermentDataItem) => {
+    const newActiveItem =
+      legendItem.ferment === activeItem ? null : legendItem.ferment;
+    setActiveItem(newActiveItem);
+  };
 
   const id = React.useId();
   useEffect(() => {
@@ -84,41 +70,36 @@ export default function Home() {
   function checkMobile() {
     setIsMobile(window.innerWidth <= 768);
   }
-  const handleEnableSound = () => {
-    dispatch({ type: "TOGGLE_PLAYING", payload: true });
-    dispatch({ type: "TOGGLE_DRAWER", payload: false });
-  };
-
-  const handleDisableSound = () => {
-    dispatch({ type: "TOGGLE_PLAYING", payload: false });
-    dispatch({ type: "TOGGLE_DRAWER", payload: false });
-  };
-
-  const handleLegendClick = (legendItem: FermentDataItem) => {
-    dispatch({ type: "SET_ACTIVE_ITEM", payload: legendItem.ferment });
-  };
-
   useEffect(() => {
-    function checkMobile() {
-      dispatch({ type: "SET_MOBILE", payload: window.innerWidth <= 768 });
-    }
+    checkMobile();
+    setShowDrawer(true);
+
     window.addEventListener("resize", checkMobile);
+
+    const fetchData = async () => {
+      const response = await fetch("data/groupedByFerment.json");
+      const jsonData = await response.json();
+      setData(jsonData);
+      setDisplayData(jsonData);
+      setIsLoading(false);
+    };
+
+    fetchData();
     return () => {
       window.removeEventListener("resize", checkMobile);
     };
   }, []);
+  const handleEnableSound = () => {
+    setIsPlaying(true);
+    setShowDrawer(false);
+  };
 
-  useEffect(() => {
-    if (state.isLoading) {
-      const fetchData = async () => {
-        const response = await fetch("data/groupedByFerment.json");
-        const jsonData = await response.json();
-        dispatch({ type: "FETCH_SUCCESS", payload: jsonData });
-      };
-      fetchData();
-    }
-  }, [state.isLoading]);
-  if (state.isLoading) {
+  const handleDisableSound = () => {
+    setIsPlaying(false);
+    setShowDrawer(false);
+  };
+
+  if (isLoading) {
     return (
       <div
         style={{
@@ -146,8 +127,8 @@ export default function Home() {
   ) : (
     <main className={styles.container}>
       <SoundPreferenceDrawer
-        isOpen={state.showDrawer}
-        onClose={() => dispatch({ type: "TOGGLE_DRAWER", payload: false })}
+        isOpen={showDrawer}
+        onClose={() => setShowDrawer(false)}
         onEnableSound={handleEnableSound}
         onDisableSound={handleDisableSound}
       />

@@ -20,22 +20,3 @@ export interface PlayerContextType {
   isPlaying: boolean;
   setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
 }
-
-export interface AppState {
-  isLoading: boolean;
-  data: FermentData[];
-  displayData: FermentData[];
-  isMobile: boolean;
-  isPlaying: boolean;
-  showDrawer: boolean;
-  isFixed: boolean;
-  isDOMReady: boolean;
-  activeItem: string | null;
-}
-
-export type AppAction =
-  | { type: "FETCH_SUCCESS"; payload: FermentData[] }
-  | { type: "SET_MOBILE"; payload: boolean }
-  | { type: "TOGGLE_PLAYING"; payload: boolean } // Updated to include payload
-  | { type: "SET_ACTIVE_ITEM"; payload: string | null }
-  | { type: "TOGGLE_DRAWER"; payload: boolean };
