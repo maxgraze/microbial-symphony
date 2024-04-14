@@ -1,30 +1,37 @@
 "use client";
 import styles from "./lib/styles/VoronoiWrapper.module.scss";
 import "./page.module.css";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import {
-  FermentData,
   circlePolygon,
-  circlePolygon2,
   legendData,
   PlayerContext,
   soysauce,
-  SPRING,
+  containerVariants,
+  childVariants,
 } from "./lib/utils";
+import { AppState, FermentData, FermentDataItem } from "./lib/types";
 import dynamic from "next/dynamic";
 import { explanation } from "./lib/motivation";
 import ReactMarkdown from "react-markdown";
 import VoronoiCircles from "./components/VoronoiCircles";
-import { Drawer, Button } from "antd";
-import {
-  motion,
-  useScroll,
-  useAnimation,
-  useTransform,
-  useMotionValueEvent,
-  LayoutGroup,
-} from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import React from "react";
+import SoundPreferenceDrawer from "./components/SoundPreferenceDrawer";
+import Legend from "./components/Legend";
+import { appReducer } from "./lib/state";
+
+const initialState: AppState = {
+  isLoading: true,
+  data: [],
+  displayData: [],
+  isMobile: false,
+  isPlaying: true,
+  showDrawer: false,
+  isFixed: false,
+  isDOMReady: false,
+  activeItem: null,
+};
 
 const Sonification = dynamic(() => import("./components/Sonification"), {
   ssr: false, // Disable server-side rendering for Sonification
@@ -37,90 +44,81 @@ export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true); //change to false
   const [showDrawer, setShowDrawer] = useState(false);
+  const [state, dispatch] = useReducer(appReducer, initialState);
 
   const [isFixed, setIsFixed] = useState(false); // State to toggle fixed positioning
   const [isDOMReady, setDOMReady] = useState(false);
+  const [activeItem, setActiveItem] = useState<string | null>(null);
+  const [displayData, setDisplayData] = useState<FermentData[]>([]);
+  const filteredData = useMemo(() => {
+    if (!activeItem) return data; // No item selected, return full dataset
 
-  const controls = useAnimation();
+    const targetOrganism =
+      activeItem.toLowerCase() === "other microorganism"
+        ? "other"
+        : activeItem.toLowerCase();
+
+    return data.filter((item: any) =>
+      item.children.some(
+        (child: { type: string }) => child.type.toLowerCase() === targetOrganism
+      )
+    );
+  }, [activeItem, data]);
+  useEffect(() => {
+    setDisplayData(filteredData);
+  }, [filteredData]);
+
+  // const handleLegendClick = (legendItem: FermentDataItem) => {
+  //   const newActiveItem =
+  //     legendItem.ferment === activeItem ? null : legendItem.ferment;
+  //   setActiveItem(newActiveItem);
+  // };
+
   const id = React.useId();
   useEffect(() => {
     // This simply waits for the next tick of the event loop, after the DOM updates.
     requestAnimationFrame(() => setDOMReady(true));
   }, []);
-  const ref = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
-  const scrollSettings = isDOMReady ? { target: ref } : { target: undefined };
-  const value = useMemo(
-    () => ({
-      players,
-      setPlayers,
-    }),
-    [players]
-  );
-
-  const { scrollYProgress } = useScroll({
-    ...scrollSettings,
-    offset: ["start start", "end start"],
-  });
-
-  const { scrollY } = useScroll({
-    ...scrollSettings,
-  });
-
-  const backdropFilter = useTransform(scrollYProgress, [0, 1], ["0px", "20px"]);
-  const legendHeight = useTransform(scrollYProgress, [0, 100], [80, 50]);
-
-  const elementTop = ref.current ? ref.current.getBoundingClientRect().top : 0;
-
-  useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    const previous = scrollYProgress.getPrevious() || 0;
-
-    const currentScrollY = scrollY.get(); // Use get() instead of .current
-
-    if (latest > previous && currentScrollY >= elementTop - 100 && !isFixed) {
-      controls.start({
-        position: "fixed",
-        top: 10,
-        zIndex: 1000,
-
-        backdropFilter: "blur(15px)",
-        borderRadius: "8px",
-        opacity: 1,
-      });
-
-      setIsFixed(true);
-    }
-  });
 
   function checkMobile() {
     setIsMobile(window.innerWidth <= 768);
   }
+  const handleEnableSound = () => {
+    dispatch({ type: "TOGGLE_PLAYING", payload: true });
+    dispatch({ type: "TOGGLE_DRAWER", payload: false });
+  };
+
+  const handleDisableSound = () => {
+    dispatch({ type: "TOGGLE_PLAYING", payload: false });
+    dispatch({ type: "TOGGLE_DRAWER", payload: false });
+  };
+
+  const handleLegendClick = (legendItem: FermentDataItem) => {
+    dispatch({ type: "SET_ACTIVE_ITEM", payload: legendItem.ferment });
+  };
+
   useEffect(() => {
-    checkMobile();
-    setShowDrawer(true);
-
+    function checkMobile() {
+      dispatch({ type: "SET_MOBILE", payload: window.innerWidth <= 768 });
+    }
     window.addEventListener("resize", checkMobile);
-
-    fetch("data/groupedByFerment.json")
-      .then((response) => response.json())
-      .then((data) => setData(data))
-      .then(() => setIsLoading(false));
-
     return () => {
       window.removeEventListener("resize", checkMobile);
     };
   }, []);
-  const handleEnableSound = () => {
-    setIsPlaying(true);
-    setShowDrawer(false);
-  };
 
-  const handleDisableSound = () => {
-    setIsPlaying(false);
-    setShowDrawer(false);
-  };
-
-  if (isLoading) {
+  useEffect(() => {
+    if (state.isLoading) {
+      const fetchData = async () => {
+        const response = await fetch("data/groupedByFerment.json");
+        const jsonData = await response.json();
+        dispatch({ type: "FETCH_SUCCESS", payload: jsonData });
+      };
+      fetchData();
+    }
+  }, [state.isLoading]);
+  if (state.isLoading) {
     return (
       <div
         style={{
@@ -147,35 +145,15 @@ export default function Home() {
     </div>
   ) : (
     <main className={styles.container}>
-      <Drawer
-        title="Sound Preference"
-        placement="bottom"
-        closable={false}
-        onClose={() => setShowDrawer(false)}
-        open={showDrawer}
-        height={200}
+      <SoundPreferenceDrawer
+        isOpen={state.showDrawer}
+        onClose={() => dispatch({ type: "TOGGLE_DRAWER", payload: false })}
+        onEnableSound={handleEnableSound}
+        onDisableSound={handleDisableSound}
+      />
+      <PlayerContext.Provider
+        value={{ players, setPlayers, isPlaying, setIsPlaying }}
       >
-        <p>
-          By allowing sound, you can <i>hear</i> the combination of the
-          microorganisms in common ferments. <br />
-          <br />
-          With a soundless experience, you can still view a simplied microbial
-          landscape of your favorite ferments.
-        </p>
-        <div
-          style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}
-        >
-          <Button
-            type="primary"
-            onClick={handleEnableSound}
-            style={{ marginRight: 8 }}
-          >
-            With Sound
-          </Button>
-          <Button onClick={handleDisableSound}>Without Sound</Button>
-        </div>
-      </Drawer>
-      <PlayerContext.Provider value={value}>
         <Sonification />
 
         <motion.div ref={pageRef} layout={true}>
@@ -185,6 +163,7 @@ export default function Home() {
                 fontFamily: "Margo Condensed",
                 fontSize: "8em",
                 paddingBottom: "20px",
+                letterSpacing: ".4rem",
               }}
             >
               Microbial Symphony
@@ -219,51 +198,15 @@ export default function Home() {
               Hover over a circle.
             </p>
 
-            <motion.div
-              style={{
-                backdropFilter,
-                height: legendHeight,
-              }}
-              transition={SPRING}
-              animate={controls}
-              className={styles.legend}
-            >
-              <LayoutGroup>
-                {legendData.map((organism, i) => {
-                  const layoutId = `${id}-${i}`;
-                  return (
-                    <motion.div
-                      ref={ref}
-                      layout="position"
-                      layoutId={layoutId}
-                      key={layoutId}
-                      animate={{ scale: isFixed ? 0.6 : 1 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 400,
-                        damping: 40 + i * 10,
-                        delay: 0.1,
-                        duration: 2,
-                      }}
-                      className={
-                        !isFixed ? styles.legendItems : styles.fixedLegendItems
-                      }
-                    >
-                      <VoronoiCircles
-                        wh={["50px", "50px"]}
-                        data={organism}
-                        key={layoutId}
-                        circlePolygon={circlePolygon2}
-                        legend={true}
-                        isPlaying={isPlaying}
-                        setIsPlaying={setIsPlaying}
-                      />
-                      <span>{organism.ferment}</span>
-                    </motion.div>
-                  );
-                })}
-              </LayoutGroup>
-            </motion.div>
+            <Legend
+              legendData={legendData}
+              handleLegendClick={handleLegendClick}
+              isFixed={isFixed}
+              activeItem={activeItem}
+              isPlaying={isPlaying} // Assuming isPlaying is defined in the parent component
+              setIsPlaying={setIsPlaying} // Assuming setIsPlaying is defined in the parent component
+              setIsFixed={setIsFixed} // Assuming setIsPlaying is defined in the parent component
+            />
             <p
               style={{
                 fontSize: "1em",
@@ -353,33 +296,41 @@ export default function Home() {
         >
           Explore the melody of other ferments below.
         </h1>
-        <div className={styles.voronoiGrid}>
-          {data &&
-            data.map((data, i) => (
-              <>
-                <div key={i} className={styles.voronoiCell}>
+        <AnimatePresence>
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            exit="hidden"
+            layout
+            className={styles.voronoiGrid}
+          >
+            {displayData &&
+              displayData.map((data, i) => (
+                <motion.div
+                  variants={childVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  layout="position"
+                  key={(data as any).ferment}
+                  className={styles.voronoiCell}
+                >
                   <VoronoiCircles
                     wh={["100px", "100px"]}
                     data={data}
-                    key={i.toString()}
+                    key={(data as any).ferment}
                     circlePolygon={circlePolygon}
                     isPlaying={isPlaying}
                     setIsPlaying={setIsPlaying}
                   />
                   <span>{(data as any).ferment}</span>
-                </div>
-              </>
-            ))}
-        </div>
+                </motion.div>
+              ))}
+          </motion.div>
+        </AnimatePresence>
       </PlayerContext.Provider>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "40px",
-          margin: "60px 0px 60px",
-        }}
-      >
+      <div className={styles.motivation}>
         <h1 style={{ fontFamily: "Margo Condensed" }}>Motivation</h1>
         <div style={{ lineHeight: "1.66em", width: "50%", fontSize: "16px" }}>
           <ReactMarkdown

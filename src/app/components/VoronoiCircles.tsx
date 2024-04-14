@@ -3,10 +3,11 @@ import React, { memo, useContext, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { fills } from "../lib/styles/fills";
 import { voronoiTreemap } from "d3-voronoi-treemap";
-import { PlayerContext, IPlayable, SPRING } from "../lib/utils";
+import { PlayerContext } from "../lib/utils";
 import { Player, NoisePlayer } from "./Sonification";
 import * as Tone from "tone";
 import { motion } from "framer-motion";
+import { IPlayable } from "../lib/types";
 interface VoronoiProps {
   data: any;
   circlePolygon: any;
@@ -14,7 +15,7 @@ interface VoronoiProps {
   isPlaying: boolean;
   setIsPlaying: (isPlaying: boolean) => void;
   wh: [string, string];
-  key: string;
+  key?: string;
 }
 
 interface VoronoiNode extends d3.HierarchyNode<any> {
@@ -123,6 +124,7 @@ const Voronoi: React.FC<VoronoiProps> = ({
 
       const voronoiCircles = voronoiTreemap().clip(circlePolygon);
 
+      console.log(data);
       const hierarchy = d3.hierarchy(data).sum((d) => d.percentage);
       voronoiCircles(hierarchy);
 

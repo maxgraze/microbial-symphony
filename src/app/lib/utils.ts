@@ -1,12 +1,15 @@
-import { createContext, useEffect, useRef, useState } from "react";
+import { createContext } from "react";
+import { FermentData, PlayerContextType } from "./types";
 
-interface PlayerContextType {
-  players: any;
-  setPlayers: React.Dispatch<React.SetStateAction<any>>;
-}
+const defaultPlayerContextValues: PlayerContextType = {
+  players: {}, // Assuming 'players' should be an object; adjust as necessary
+  setPlayers: () => {}, // No-op function as default
+  isPlaying: false,
+  setIsPlaying: () => {}, // No-op function as default
+};
 
-export const PlayerContext = createContext<PlayerContextType | undefined>(
-  undefined
+export const PlayerContext = createContext<PlayerContextType>(
+  defaultPlayerContextValues
 );
 
 export function nFormatter(num: number, digits?: number) {
@@ -56,15 +59,6 @@ export function circularPolygon(
   }
   return points;
 }
-
-export type FermentData = {
-  ferment: string;
-  children: {
-    type: string;
-    percentage: number;
-    organism: string;
-  }[];
-}[];
 
 export const legendData: FermentData = [
   {
@@ -129,11 +123,6 @@ export const legendData: FermentData = [
   },
 ];
 
-export interface IPlayable {
-  play(): void;
-  stop(): void;
-}
-
 export const margin = { top: 10, right: 10, bottom: 10, left: 10 };
 
 const height = 1000;
@@ -192,4 +181,36 @@ export const SPRING = {
   delay: 0.1,
   duration: 2,
   delayChildren: 0.5,
+};
+
+export const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.5,
+      type: "spring",
+      stiffness: 90, // Lowered for less abrupt movement
+      damping: 30, // Increased to reduce oscillation
+    },
+  },
+};
+
+export const childVariants = {
+  initial: { opacity: 0, y: 50 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 90, // Consistency with container
+      damping: 30,
+      mass: 0.8, // Lowered mass for a more responsive feel
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -50,
+    transition: { type: "spring", stiffness: 90, damping: 30 }, // Use spring for exit for consistency
+  },
 };
