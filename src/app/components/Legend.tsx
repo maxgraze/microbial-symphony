@@ -114,7 +114,9 @@ const Legend: React.FC<LegendProps> = ({
                 isPlaying={isPlaying}
                 setIsPlaying={setIsPlaying}
               />
-              <span>{organism.ferment}</span>
+              <span style={{ letterSpacing: "normal" }}>
+                {organism.ferment}
+              </span>
             </motion.div>
           );
         })}

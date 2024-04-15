@@ -305,7 +305,16 @@ export default function Home() {
                     isPlaying={isPlaying}
                     setIsPlaying={setIsPlaying}
                   />
-                  <span>{(data as any).ferment}</span>
+                  <span style={{ textAlign: "center", lineHeight: 1.3 }}>
+                    {(data as any).ferment
+                      .split(/(\([^)]+\))/)
+                      .map((part: string, index: number) => (
+                        <React.Fragment key={index}>
+                          {index !== 0 && /\(/.test(part) && <br />}
+                          {part}
+                        </React.Fragment>
+                      ))}
+                  </span>
                 </motion.div>
               ))}
           </motion.div>
