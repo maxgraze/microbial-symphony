@@ -226,6 +226,13 @@ const Sonification = () => {
           envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 1 },
           volume: -8,
         }).toDestination();
+        // const other_synth = new Tone.MonoSynth({
+        //   oscillator: { type: "fatsine" },
+        //   envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 1 },
+        //   volume: -8,
+        // }).toDestination();
+
+        //Type '""' is not assignable to type '"pulse" | "pwm" | "fatcustom" | "fatsine" | "fatsquare" | "fatsawtooth" | "fattriangle" | FatTypeWithPartials | "fmcustom" | "custom" | NonCustomOscillatorType | ... 12 more ... | undefined'.ts(2322)
 
         // LAB_synth.chain(volume, limiter, compressor, Tone.Destination);
 
@@ -284,21 +291,15 @@ const Sonification = () => {
         lfo.connect(filter.frequency);
         noise.connect(filter).toDestination();
 
-        let other = new NoisePlayer(noise, lfo, "8n", 2000);
+        const other_synth = new Tone.MonoSynth({
+          oscillator: { type: "fatsine" },
+          envelope: { attack: 0.1, decay: 0.2, sustain: 0.2, release: 1.5 },
+          volume: -14,
+        });
 
-        let noiseSynth = new Tone.NoiseSynth({
-          noise: {
-            type: "white",
-          },
-          envelope: {
-            attack: 0,
-            decay: 0.1,
-            sustain: 0.3,
-          },
-          volume: -10,
-        }).toDestination();
-
-        noiseSynth.connect(filter);
+        const other_filter = new Tone.Filter(5000, "lowpass").toDestination();
+        other_synth.connect(other_filter);
+        const other = new Player(other_synth, ["E3"], "8n");
 
         setPlayers({
           lactic_acid_bacteria,
