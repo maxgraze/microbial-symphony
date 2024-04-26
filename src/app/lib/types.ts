@@ -20,3 +20,17 @@ export interface PlayerContextType {
   isPlaying: boolean;
   setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
 }
+
+export interface VoronoiProps {
+  data: any;
+  circlePolygon: any;
+  legend?: boolean;
+  isPlaying: boolean;
+  setIsPlaying: (isPlaying: boolean) => void;
+  wh: [string, string];
+  key?: string;
+}
+
+export interface VoronoiNode extends d3.HierarchyNode<any> {
+  polygon: [number, number][];
+}

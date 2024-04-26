@@ -4,10 +4,12 @@ import * as d3 from "d3";
 import { fills } from "../lib/styles/fills";
 import { voronoiTreemap } from "d3-voronoi-treemap";
 import { PlayerContext } from "../lib/utils";
-import { Player, NoisePlayer } from "./Sonification";
+import { Player, NoisePlayer } from "../lib/Classes";
 import * as Tone from "tone";
 import { motion } from "framer-motion";
 import { IPlayable } from "../lib/types";
+import { useAudioInitializer } from "../lib/hooks/useAudioInitializer";
+
 interface VoronoiProps {
   data: any;
   circlePolygon: any;
@@ -93,7 +95,27 @@ const Voronoi: React.FC<VoronoiProps> = ({
     });
   };
 
+  // Create VoronoiCreate Voronoi
+
   useEffect(() => {
+    if (players && Object.keys(players).length > 0 && ref.current) {
+      renderVoronoiDiagram(ref.current, data, players, isPlaying);
+    }
+  }, [players, data, isPlaying]);
+
+  // Cleanup synths on component unmount
+  useEffect(() => {
+    return () => {
+      stopAllSynths();
+    };
+  }, []);
+
+  const renderVoronoiDiagram = (
+    container: SVGSVGElement,
+    data: any,
+    players: any,
+    isPlaying: boolean
+  ) => {
     if (players && Object.keys(players).length > 0 && ref.current) {
       d3.select(ref.current).selectAll("*").remove();
       const svg = d3.select(ref.current);
@@ -124,7 +146,6 @@ const Voronoi: React.FC<VoronoiProps> = ({
 
       const voronoiCircles = voronoiTreemap().clip(circlePolygon);
 
-      console.log(data);
       const hierarchy = d3.hierarchy(data).sum((d) => d.percentage);
       voronoiCircles(hierarchy);
 
@@ -178,7 +199,7 @@ const Voronoi: React.FC<VoronoiProps> = ({
           .attr("text-anchor", "middle")
           .attr("font-family", "Figtree");
     }
-  }, [players, isPlaying]);
+  };
 
   return (
     <>
