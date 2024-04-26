@@ -8,7 +8,6 @@ import { Player, NoisePlayer } from "../lib/Classes";
 import * as Tone from "tone";
 import { motion } from "framer-motion";
 import { IPlayable } from "../lib/types";
-import { useAudioInitializer } from "../lib/hooks/useAudioInitializer";
 
 interface VoronoiProps {
   data: any;

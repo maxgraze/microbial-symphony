@@ -1,19 +1,27 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
 const useCheckMobile = () => {
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  // Initialize as null or a sensible default, such as false
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" && window.innerWidth <= 768
+  );
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
+    // Ensure window is defined before adding an event listener
+    if (typeof window !== "undefined") {
+      const handleResize = () => {
+        setIsMobile(window.innerWidth <= 768);
+      };
 
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+      // Set up resize listener
+      window.addEventListener("resize", handleResize);
+
+      // Clean up listener to prevent memory leaks
+      return () => window.removeEventListener("resize", handleResize);
+    }
   }, []);
 
   return isMobile;
 };
+
 export default useCheckMobile;

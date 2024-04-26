@@ -21,8 +21,6 @@ import SoundPreferenceDrawer from "./components/SoundPreferenceDrawer";
 import Legend from "./components/Legend";
 import useFetchData from "./lib/hooks/useFetchData";
 import useCheckMobile from "./lib/hooks/useCheckMobile";
-import { useAudioInitializer } from "./lib/hooks/useAudioInitializer";
-import Voronoi from "./components/Voronoi";
 import { initialState, reducer } from "./lib/PlayerContext";
 import {
   DetailedDescription,
