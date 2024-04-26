@@ -16,6 +16,7 @@ interface LegendProps {
   legendData: FermentDataItem[];
   handleLegendClick: (organism: FermentDataItem) => void;
   isFixed: boolean;
+  isMobile: boolean;
   activeItem: string | null;
   isPlaying: boolean; // Add isPlaying to props
   setIsPlaying: (isPlaying: boolean) => void; // Add setIsPlaying to props
@@ -28,6 +29,7 @@ const Legend: React.FC<LegendProps> = ({
   isFixed,
   setIsFixed,
   activeItem,
+  isMobile,
   isPlaying, // Deconstruct isPlaying from props
   setIsPlaying, // Deconstruct setIsPlaying from props
 }) => {
@@ -67,7 +69,7 @@ const Legend: React.FC<LegendProps> = ({
       setIsFixed(true);
     }
   });
-  return (
+  return !isMobile ? (
     <motion.div
       style={{
         backdropFilter,
@@ -122,6 +124,36 @@ const Legend: React.FC<LegendProps> = ({
         })}
       </LayoutGroup>
     </motion.div>
+  ) : (
+    <div className={styles.legend}>
+      {legendData.map((organism, i) => {
+        const layoutId = `legend-item-${i}`;
+        return (
+          <div
+            key={layoutId}
+            onClick={() => handleLegendClick(organism)}
+            style={{
+              opacity:
+                activeItem === null || activeItem === organism.ferment
+                  ? 1
+                  : 0.5,
+              cursor: "pointer",
+            }}
+            className={styles.fixedLegendItems}
+          >
+            <VoronoiCircles
+              wh={["50px", "50px"]}
+              data={organism}
+              circlePolygon={circlePolygon2}
+              legend={true}
+              isPlaying={isPlaying}
+              setIsPlaying={setIsPlaying}
+            />
+            <span style={{ letterSpacing: "normal" }}>{organism.ferment}</span>
+          </div>
+        );
+      })}
+    </div>
   );
 };
 

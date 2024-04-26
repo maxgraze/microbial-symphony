@@ -9,14 +9,27 @@ export const Introduction = () => (
   </div>
 );
 
-export const MicroorganismInfo = () => (
-  <div style={{ fontSize: "1em", fontStyle: "italic", marginTop: "20px" }}>
-    Hover over a circle.
+export const MicroorganismInfo = ({ isMobile }: any) => (
+  <div
+    style={{
+      fontSize: "1em",
+      fontStyle: "italic",
+      marginTop: "20px",
+      textAlign: isMobile && "center",
+    }}
+  >
+    {isMobile ? "Click a circle to toggle the sound" : "Hover over a circle."}
   </div>
 );
 
-export const DetailedDescription = () => (
-  <p style={{ fontSize: "1em", marginTop: "100px", width: "50%" }}>
+export const DetailedDescription = ({ isMobile }: any) => (
+  <p
+    style={{
+      fontSize: "1em",
+      marginTop: isMobile ? "0" : "100px",
+      width: isMobile ? "90%" : "50%",
+    }}
+  >
     <b>
       These five microorganisms are the most prevalent types in fermentation.
     </b>

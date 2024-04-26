@@ -35,17 +35,17 @@ const Sonification = dynamic(() => import("./components/Sonification"), {
 export default function Home() {
   const isMobile = useCheckMobile();
 
-  if (isMobile)
-    <div
-      style={{
-        fontFamily: "Figtree",
-        fontSize: "2em",
-        margin: "60px 40px",
-        lineHeight: "1.66em",
-      }}
-    >
-      Sorry! This experience is currently only available on desktop.
-    </div>;
+  // if (isMobile)
+  //   <div
+  //     style={{
+  //       fontFamily: "Figtree",
+  //       fontSize: "2em",
+  //       margin: "60px 40px",
+  //       lineHeight: "1.66em",
+  //     }}
+  //   >
+  //     Sorry! This experience is currently only available on desktop.
+  //   </div>;
 
   const [players, setPlayers] = useState<any>({});
   const [isPlaying, setIsPlaying] = useState(true); //change to false
@@ -151,17 +151,18 @@ export default function Home() {
               gap: "40px",
             }}
           >
-            <MicroorganismInfo />
+            <MicroorganismInfo isMobile={isMobile} />
             <Legend
               legendData={legendData}
               handleLegendClick={handleLegendClick}
               isFixed={isFixed}
+              isMobile={isMobile}
               activeItem={activeItem}
               isPlaying={isPlaying} // Assuming isPlaying is defined in the parent component
               setIsPlaying={setIsPlaying} // Assuming setIsPlaying is defined in the parent component
               setIsFixed={setIsFixed} // Assuming setIsPlaying is defined in the parent component
             />
-            <DetailedDescription />
+            <DetailedDescription isMobile={isMobile} />
           </div>
           <div className={styles.soysauceDiv}>
             <h1
@@ -171,14 +172,7 @@ export default function Home() {
             >
               What does soy sauce sound like?
             </h1>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "40px",
-              }}
-            >
+            <div>
               {soysauce && (
                 <div
                   style={{
@@ -195,7 +189,7 @@ export default function Home() {
                   />
                 </div>
               )}
-              <p style={{ width: "30%", letterSpacing: " 0.1em" }}>
+              <p>
                 It&apos;s three main microorganism types,
                 <span className={`${styles.pill} ${styles.yeast}`}>yeast,</span>
                 <span className={`${styles.pill} ${styles.mold}`}>mold</span>
@@ -264,7 +258,7 @@ export default function Home() {
       </PlayerContext.Provider>
       <div className={styles.motivation}>
         <h1 style={{ fontFamily: "Margo Condensed" }}>Motivation</h1>
-        <div style={{ lineHeight: "1.66em", width: "50%", fontSize: "16px" }}>
+        <div>
           <ReactMarkdown
             components={{
               a: ({ node, ...props }) => (
@@ -281,8 +275,8 @@ export default function Home() {
           </ReactMarkdown>
         </div>
       </div>
-      <div>
-        © 2023 &nbsp; <a href="http://www.datagrazing.com"> Max Graze</a>
+      <div style={{ float: isMobile ? "right" : undefined }}>
+        © 2024 &nbsp; <a href="http://www.datagrazing.com"> Max Graze</a>
       </div>
     </main>
   );
