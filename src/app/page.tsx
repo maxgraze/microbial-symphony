@@ -1,7 +1,7 @@
 "use client";
 import styles from "./lib/styles/VoronoiWrapper.module.scss";
 import "./page.module.css";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useReducer } from "react";
 import {
   circlePolygon,
   legendData,
@@ -19,23 +19,42 @@ import { motion, AnimatePresence } from "framer-motion";
 import React from "react";
 import SoundPreferenceDrawer from "./components/SoundPreferenceDrawer";
 import Legend from "./components/Legend";
+import useFetchData from "./lib/hooks/useFetchData";
+import useCheckMobile from "./lib/hooks/useCheckMobile";
+import { initialState, reducer } from "./lib/PlayerContext";
+import {
+  DetailedDescription,
+  Introduction,
+  MicroorganismInfo,
+} from "./components/Text";
 
 const Sonification = dynamic(() => import("./components/Sonification"), {
   ssr: false, // Disable server-side rendering for Sonification
 });
 
 export default function Home() {
-  const [players, setPlayers] = useState<any>({});
-  const [data, setData] = useState<FermentData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(true); //change to false
-  const [showDrawer, setShowDrawer] = useState(false);
+  const isMobile = useCheckMobile();
 
+  // if (isMobile)
+  //   <div
+  //     style={{
+  //       fontFamily: "Figtree",
+  //       fontSize: "2em",
+  //       margin: "60px 40px",
+  //       lineHeight: "1.66em",
+  //     }}
+  //   >
+  //     Sorry! This experience is currently only available on desktop.
+  //   </div>;
+
+  const [players, setPlayers] = useState<any>({});
+  const [isPlaying, setIsPlaying] = useState(true); //change to false
   const [isFixed, setIsFixed] = useState(false); // State to toggle fixed positioning
-  const [isDOMReady, setDOMReady] = useState(false);
-  const [activeItem, setActiveItem] = useState<string | null>(null);
-  const [displayData, setDisplayData] = useState<FermentData[]>([]);
+  const { data, isLoading } = useFetchData();
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  const { activeItem, displayData } = state;
+
   const filteredData = useMemo(() => {
     if (!activeItem) return data; // No item selected, return full dataset
 
@@ -50,53 +69,43 @@ export default function Home() {
       )
     );
   }, [activeItem, data]);
-  useEffect(() => {
-    setDisplayData(filteredData);
-  }, [filteredData]);
 
   const handleLegendClick = (legendItem: FermentDataItem) => {
     const newActiveItem =
       legendItem.ferment === activeItem ? null : legendItem.ferment;
-    setActiveItem(newActiveItem);
+    dispatch({ type: "SET_ACTIVE_ITEM", payload: newActiveItem });
   };
 
-  const id = React.useId();
   useEffect(() => {
-    // This simply waits for the next tick of the event loop, after the DOM updates.
-    requestAnimationFrame(() => setDOMReady(true));
-  }, []);
+    dispatch({ type: "SET_DISPLAY_DATA", payload: filteredData });
+  }, [filteredData, dispatch]);
+
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      dispatch({ type: "DOM_READY", payload: true });
+    });
+  }, [dispatch]);
+
   const pageRef = useRef<HTMLDivElement>(null);
 
-  function checkMobile() {
-    setIsMobile(window.innerWidth <= 768);
-  }
   useEffect(() => {
-    checkMobile();
-    setShowDrawer(true);
-
-    window.addEventListener("resize", checkMobile);
-
-    const fetchData = async () => {
-      const response = await fetch("data/groupedByFerment.json");
-      const jsonData = await response.json();
-      setData(jsonData);
-      setDisplayData(jsonData);
-      setIsLoading(false);
-    };
-
-    fetchData();
-    return () => {
-      window.removeEventListener("resize", checkMobile);
-    };
+    dispatch({ type: "TOGGLE_DRAWER" });
   }, []);
-  const handleEnableSound = () => {
+
+  const handleCloseDrawer = () => {
+    dispatch({ type: "TOGGLE_DRAWER" });
+  };
+
+  const handleEnableSound = async () => {
     setIsPlaying(true);
-    setShowDrawer(false);
+    dispatch({ type: "TOGGLE_DRAWER" });
+
+    // setAudioReady(true);
   };
 
   const handleDisableSound = () => {
     setIsPlaying(false);
-    setShowDrawer(false);
+    dispatch({ type: "TOGGLE_DRAWER" });
   };
 
   if (isLoading) {
@@ -113,22 +122,11 @@ export default function Home() {
     );
   }
 
-  return isMobile ? (
-    <div
-      style={{
-        fontFamily: "Figtree",
-        fontSize: "2em",
-        margin: "60px 40px",
-        lineHeight: "1.66em",
-      }}
-    >
-      Sorry! This experience is currently only available on desktop.
-    </div>
-  ) : (
+  return (
     <main className={styles.container}>
       <SoundPreferenceDrawer
-        isOpen={showDrawer}
-        onClose={() => setShowDrawer(false)}
+        isOpen={state.showDrawer}
+        onClose={handleCloseDrawer}
         onEnableSound={handleEnableSound}
         onDisableSound={handleDisableSound}
       />
@@ -138,28 +136,8 @@ export default function Home() {
         <Sonification />
 
         <motion.div ref={pageRef} layout={true}>
-          <div className={styles.display}>
-            <h1
-              style={{
-                fontFamily: "Margo Condensed",
-                fontSize: "8em",
-                paddingBottom: "20px",
-                letterSpacing: ".4rem",
-              }}
-            >
-              Microbial Symphony
-            </h1>
-            <p
-              style={{
-                fontSize: "1.3em",
-                marginTop: " 20px",
-              }}
-            >
-              {" "}
-              Uncover the symphony of microorganisms hidden within your favorite
-              foods.
-            </p>
-          </div>
+          <Introduction />
+
           <div
             style={{
               display: "flex",
@@ -168,58 +146,18 @@ export default function Home() {
               gap: "40px",
             }}
           >
-            <p
-              style={{
-                fontSize: "1em",
-                fontStyle: "italic",
-                marginTop: " 20px",
-              }}
-            >
-              {" "}
-              Hover over a circle.
-            </p>
-
+            <MicroorganismInfo isMobile={isMobile} />
             <Legend
               legendData={legendData}
               handleLegendClick={handleLegendClick}
               isFixed={isFixed}
+              isMobile={isMobile}
               activeItem={activeItem}
-              isPlaying={isPlaying} // Assuming isPlaying is defined in the parent component
-              setIsPlaying={setIsPlaying} // Assuming setIsPlaying is defined in the parent component
-              setIsFixed={setIsFixed} // Assuming setIsPlaying is defined in the parent component
+              isPlaying={isPlaying}
+              setIsPlaying={setIsPlaying}
+              setIsFixed={setIsFixed}
             />
-            <p
-              style={{
-                fontSize: "1em",
-                marginTop: "100px",
-                width: "50%",
-              }}
-            >
-              {" "}
-              <b>
-                These five microorganisms are the most prevelant types in
-                fermentation.{" "}
-              </b>
-              <br />
-              <br /> Imagine you are sitting alongside the Seine canal in Paris,
-              enjoying an aperatif in the gentle warmth of the sun: you picked
-              out a crusty baguette, risen with{" "}
-              <span className={`${styles.pill} ${styles.yeast}`}>yeast,</span>
-              topped it with rich brie—its creamy tang courtesy of
-              <span className={`${styles.pill} ${styles.lactic_acid_bacteria}`}>
-                lactic acid bacteria,
-              </span>{" "}
-              and protective layer of{" "}
-              <span className={`${styles.pill} ${styles.mold}`}>mold</span>
-              Alongside, you savor cornichons, their satisfying crunch and
-              tartness, brought to you by
-              <span className={`${styles.pill} ${styles.acetic_acid_bacteria}`}>
-                acetic acid bacteria.
-              </span>
-              <br />
-              <br />
-              They are our unseen collaborators of fermentation and flavor.
-            </p>
+            <DetailedDescription isMobile={isMobile} />
           </div>
           <div className={styles.soysauceDiv}>
             <h1
@@ -229,14 +167,7 @@ export default function Home() {
             >
               What does soy sauce sound like?
             </h1>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "40px",
-              }}
-            >
+            <div>
               {soysauce && (
                 <div
                   style={{
@@ -250,10 +181,11 @@ export default function Home() {
                     circlePolygon={circlePolygon}
                     isPlaying={isPlaying}
                     setIsPlaying={setIsPlaying}
+                    isMobile={isMobile}
                   />
                 </div>
               )}
-              <p style={{ width: "30%", letterSpacing: " 0.1em" }}>
+              <p>
                 It&apos;s three main microorganism types,
                 <span className={`${styles.pill} ${styles.yeast}`}>yeast,</span>
                 <span className={`${styles.pill} ${styles.mold}`}>mold</span>
@@ -304,6 +236,7 @@ export default function Home() {
                     circlePolygon={circlePolygon}
                     isPlaying={isPlaying}
                     setIsPlaying={setIsPlaying}
+                    isMobile={isMobile}
                   />
                   <span style={{ textAlign: "center", lineHeight: 1.3 }}>
                     {(data as any).ferment
@@ -322,7 +255,7 @@ export default function Home() {
       </PlayerContext.Provider>
       <div className={styles.motivation}>
         <h1 style={{ fontFamily: "Margo Condensed" }}>Motivation</h1>
-        <div style={{ lineHeight: "1.66em", width: "50%", fontSize: "16px" }}>
+        <div>
           <ReactMarkdown
             components={{
               a: ({ node, ...props }) => (
@@ -339,8 +272,8 @@ export default function Home() {
           </ReactMarkdown>
         </div>
       </div>
-      <div>
-        © 2023 &nbsp; <a href="http://www.datagrazing.com"> Max Graze</a>
+      <div style={{ float: isMobile ? "right" : undefined }}>
+        © 2024 &nbsp; <a href="http://www.datagrazing.com"> Max Graze</a>
       </div>
     </main>
   );

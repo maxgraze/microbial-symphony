@@ -16,6 +16,7 @@ interface LegendProps {
   legendData: FermentDataItem[];
   handleLegendClick: (organism: FermentDataItem) => void;
   isFixed: boolean;
+  isMobile: boolean;
   activeItem: string | null;
   isPlaying: boolean; // Add isPlaying to props
   setIsPlaying: (isPlaying: boolean) => void; // Add setIsPlaying to props
@@ -28,11 +29,11 @@ const Legend: React.FC<LegendProps> = ({
   isFixed,
   setIsFixed,
   activeItem,
-  isPlaying, // Deconstruct isPlaying from props
-  setIsPlaying, // Deconstruct setIsPlaying from props
+  isMobile,
+  isPlaying,
+  setIsPlaying,
 }) => {
   const controls = useAnimation();
-  const id = React.useId();
   const ref = useRef<HTMLDivElement>(null);
   const scrollSettings = { target: ref };
   const { scrollYProgress } = useScroll({
@@ -51,7 +52,7 @@ const Legend: React.FC<LegendProps> = ({
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
     const previous = scrollYProgress.getPrevious() || 0;
 
-    const currentScrollY = scrollY.get(); // Use get() instead of .current
+    const currentScrollY = scrollY.get();
 
     if (latest > previous && currentScrollY >= elementTop - 100 && !isFixed) {
       controls.start({
@@ -67,6 +68,28 @@ const Legend: React.FC<LegendProps> = ({
       setIsFixed(true);
     }
   });
+
+  if (isMobile) {
+    return (
+      <div className={styles.legend}>
+        {legendData.map((organism, i) => (
+          <div key={`legend-item-${i}`} className={styles.fixedLegendItems}>
+            <VoronoiCircles
+              wh={["50px", "50px"]}
+              data={organism}
+              circlePolygon={circlePolygon2}
+              legend={true}
+              isPlaying={isPlaying}
+              setIsPlaying={setIsPlaying}
+              isMobile={true}
+            />
+            <span>{organism.ferment}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <motion.div
       style={{
@@ -113,6 +136,7 @@ const Legend: React.FC<LegendProps> = ({
                 legend={true}
                 isPlaying={isPlaying}
                 setIsPlaying={setIsPlaying}
+                isMobile={isMobile}
               />
               <span style={{ letterSpacing: "normal" }}>
                 {organism.ferment}

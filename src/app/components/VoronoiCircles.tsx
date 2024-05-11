@@ -4,10 +4,11 @@ import * as d3 from "d3";
 import { fills } from "../lib/styles/fills";
 import { voronoiTreemap } from "d3-voronoi-treemap";
 import { PlayerContext } from "../lib/utils";
-import { Player, NoisePlayer } from "./Sonification";
+import { Player, NoisePlayer } from "../lib/Classes";
 import * as Tone from "tone";
 import { motion } from "framer-motion";
 import { IPlayable } from "../lib/types";
+
 interface VoronoiProps {
   data: any;
   circlePolygon: any;
@@ -16,6 +17,7 @@ interface VoronoiProps {
   setIsPlaying: (isPlaying: boolean) => void;
   wh: [string, string];
   key?: string;
+  isMobile: boolean;
 }
 
 interface VoronoiNode extends d3.HierarchyNode<any> {
@@ -28,7 +30,9 @@ const Voronoi: React.FC<VoronoiProps> = ({
   legend,
   isPlaying,
   wh,
+  isMobile,
 }) => {
+  const [activeNode, setActiveNode] = useState<VoronoiNode | null>(null);
   const ref = useRef<SVGSVGElement | null>(null);
 
   const players = useContext(PlayerContext)?.players;
@@ -57,6 +61,11 @@ const Voronoi: React.FC<VoronoiProps> = ({
     if (!playersLoaded || typeof window === "undefined") {
       return;
     }
+    // Check that d.data and d.data.children are properly defined
+    if (!d.data || !Array.isArray(d.data.children)) {
+      console.error("Node data is missing or children are not iterable", d);
+      return;
+    }
 
     // Only start Tone.js if not already started
     if (Tone.context.state !== "running") {
@@ -68,6 +77,8 @@ const Voronoi: React.FC<VoronoiProps> = ({
         return;
       }
     }
+
+    const startTime = Tone.now() + 0.1;
 
     const newOrganisms = d.data.children.map((child: { type: string }) =>
       child.type.replace(/ /g, "_")
@@ -89,11 +100,61 @@ const Voronoi: React.FC<VoronoiProps> = ({
 
     organismSynths.forEach((player: IPlayable) => {
       playingSynths.current.push(player);
-      player.play();
+      player.play(startTime);
     });
+  };
+  const handleNodeClick = (
+    event: React.MouseEvent<HTMLElement>,
+    d: VoronoiNode
+  ) => {
+    if (isMobile) {
+      if (activeNode && activeNode.id === d.id) {
+        setActiveNode(null);
+      } else {
+        setActiveNode(d);
+      }
+    }
   };
 
   useEffect(() => {
+    console.log("Active Node after click:", activeNode);
+    stopAllSynths(); // Stop all synths when active node changes
+    if (activeNode) {
+      onStartClick(activeNode); // Start synths only if there is an active node
+    }
+  }, [activeNode]);
+
+  // Create VoronoiCreate Voronoi
+  function determineFill(d: { data: { type: string }; depth: number }) {
+    if (d.data.type && d.depth > 0) {
+      return d.data.type == "other"
+        ? "#b9b9b9"
+        : "url(#" + d.data.type.replace(/\s+/g, "_") + ")";
+    } else if (d.data.type && d.data.type == "other") {
+      return "grey";
+    } else {
+      return "yellow";
+    }
+  }
+  useEffect(() => {
+    if (players && Object.keys(players).length > 0 && ref.current) {
+      renderVoronoiDiagram(ref.current, data, players, isPlaying);
+    }
+  }, [players, data, isPlaying, setActiveNode]);
+
+  // Cleanup synths on component unmount
+  useEffect(() => {
+    return () => {
+      stopAllSynths();
+    };
+  }, []);
+
+  const renderVoronoiDiagram = (
+    container: SVGSVGElement,
+    data: any,
+    players: any,
+    isPlaying: boolean
+  ) => {
     if (players && Object.keys(players).length > 0 && ref.current) {
       d3.select(ref.current).selectAll("*").remove();
       const svg = d3.select(ref.current);
@@ -124,14 +185,13 @@ const Voronoi: React.FC<VoronoiProps> = ({
 
       const voronoiCircles = voronoiTreemap().clip(circlePolygon);
 
-      console.log(data);
       const hierarchy = d3.hierarchy(data).sum((d) => d.percentage);
       voronoiCircles(hierarchy);
 
       let allNodes = hierarchy
         .descendants()
         .sort((a, b) => b.depth - a.depth)
-        .map((d, i) => Object.assign({}, d, { id: i }));
+        .map((d, i) => Object.assign({}, d, { id: d.data.ferment }));
 
       voronoi
         .selectAll(".background-path")
@@ -147,16 +207,10 @@ const Voronoi: React.FC<VoronoiProps> = ({
         .join("path")
         .attr("class", "foreground-path")
         .attr("d", (d) => "M" + d.polygon.join("L") + "Z")
+        .attr("id", (d) => `node-${d.data.ferment}`)
         .attr("stroke", (d) => "ivory")
         .style("fill-opacity", (d) => (d.depth === 1 ? 1 : 0))
-        .attr("fill", (d) => {
-          if (d.data.type && d.depth > 0) {
-            return d.data.type == "other"
-              ? "#b9b9b9"
-              : "url(#" + d.data.type.replace(/\s+/g, "_") + ")";
-          } else if (d.data.type && d.data.type == "other") return "grey";
-          else return "yellow";
-        })
+        .attr("fill", (d) => determineFill(d))
         .attr("stroke-width", (d) => 5 - d.depth * 2);
 
       nodes
@@ -166,6 +220,7 @@ const Voronoi: React.FC<VoronoiProps> = ({
           }
         })
         .on("mouseleave", () => stopAllSynths())
+        .on("click", handleNodeClick)
         .transition()
         .duration(1000);
 
@@ -178,7 +233,7 @@ const Voronoi: React.FC<VoronoiProps> = ({
           .attr("text-anchor", "middle")
           .attr("font-family", "Figtree");
     }
-  }, [players, isPlaying]);
+  };
 
   return (
     <>
@@ -223,30 +278,41 @@ const Voronoi: React.FC<VoronoiProps> = ({
                 },
               }
         }
-        // onHoverStart={() => {
-        //   if (!isAnimationPlaying) {
-        //     setIsAnimationPlaying(true);
-        //     controls.start({
-        //       scale: 1.2,
-        //       transition: {
-        //         type: "tween",
-        //         repeat: Infinity,
-        //         repeatType: "reverse",
-        //         duration: 0.5,
-        //       },
-        //     });
-        //   }
-        // }}
-        // onHoverEnd={() => {
-        //   // setIsAnimationPlaying(false);
-        //   controls.start({
-        //     // y: 0,
-        //     // rotate: 0,
-        //     scale: 1,
-        //     opacity: 1,
-        //     filter: "revert",
-        //   });
-        // }}
+        whileTap={
+          legend
+            ? {
+                scale: [1, 1.2, 1],
+                transition: {
+                  type: "tween",
+                  repeat: Infinity,
+                  ease: "linear",
+
+                  repeatType: "reverse",
+                  duration: 1.5,
+                  stiffnes: 100,
+                  dampness: 40,
+                },
+              }
+            : {
+                scale: [1, 1.2, 1],
+                rotate: [45, 90, 135, 180, 225, 270, 315, 360],
+                filter: [
+                  "drop-shadow(0 0 5px rgba(255, 255, 224, 0.5))",
+                  "drop-shadow(0 0 20px rgba(255, 255, 224, 0.7))",
+                  "drop-shadow(0 0 5px rgba(255, 255, 224, 1)",
+                ],
+                transition: {
+                  type: "tween",
+                  repeat: Infinity,
+                  ease: "linear",
+
+                  repeatType: "reverse",
+                  duration: 2,
+                  stiffnes: 100,
+                  dampness: 40,
+                },
+              }
+        }
         ref={ref}
       />
     </>

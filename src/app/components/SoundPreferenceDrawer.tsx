@@ -1,5 +1,6 @@
 import React from "react";
 import { Drawer, Button } from "antd";
+import styles from "../lib/styles/VoronoiWrapper.module.scss";
 
 // Define the props type for clearer type checking and maintainability
 interface SoundPreferenceDrawerProps {
@@ -31,9 +32,7 @@ const SoundPreferenceDrawer: React.FC<SoundPreferenceDrawerProps> = ({
         With a soundless experience, you can still view a simplified microbial
         landscape of your favorite ferments.
       </p>
-      <div
-        style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}
-      >
+      <div className={styles.soundPreference}>
         <Button
           type="primary"
           onClick={onEnableSound}
