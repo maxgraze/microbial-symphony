@@ -1,9 +1,5 @@
 import * as Tone from "tone";
-
-interface IPlayable {
-  play(): void;
-  stop(): void;
-}
+import { IPlayable } from "./types";
 
 export class NoisePlayer implements IPlayable {
   synth: Tone.NoiseSynth;
@@ -24,8 +20,16 @@ export class NoisePlayer implements IPlayable {
     this.delay = delay;
   }
 
-  play(): void {
-    this.playNoiseSequence();
+  play(startTime?: number): void {
+    // Make startTime optional to match IPlayable
+    if (typeof startTime === "number") {
+      const timeUntilStart = startTime - Tone.now();
+      this.timeoutId = setTimeout(() => {
+        this.playNoiseSequence(); // Start playing the sequence
+      }, timeUntilStart);
+    } else {
+      this.playNoiseSequence(); // Start immediately if no startTime is provided
+    }
   }
 
   stop(): void {
@@ -36,7 +40,6 @@ export class NoisePlayer implements IPlayable {
     this.lfo.stop();
     this.synth.triggerRelease();
   }
-
   playNoiseSequence(): void {
     this.synth.triggerAttack();
     this.lfo.start();
@@ -63,8 +66,17 @@ export class Player implements IPlayable {
     this.delay = delay;
   }
 
-  play(): void {
-    this.playNoteSequence();
+  play(): void;
+  play(startTime: number): void;
+  play(startTime?: number): void {
+    if (typeof startTime === "number") {
+      const timeUntilStart = startTime - Tone.now();
+      this.timeoutId = setTimeout(() => {
+        this.playNoteSequence(); // Start playing the sequence
+      }, timeUntilStart);
+    } else {
+      this.playNoteSequence(); // Start immediately
+    }
   }
 
   stop(time?: number): void {

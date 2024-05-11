@@ -100,17 +100,12 @@ export default function Home() {
     setIsPlaying(true);
     dispatch({ type: "TOGGLE_DRAWER" });
 
-    // setAudioReady(true);  // Ensure this function is available and updates the state correctly.
+    // setAudioReady(true);
   };
 
   const handleDisableSound = () => {
     setIsPlaying(false);
-    // setShowDrawer(false);
     dispatch({ type: "TOGGLE_DRAWER" });
-
-    // If you need to actually stop all audio, make sure this is being handled:
-    // Tone.Transport.stop();
-    // Assuming you have ongoing sounds that need to be stopped, manage that here.
   };
 
   if (isLoading) {
@@ -158,9 +153,9 @@ export default function Home() {
               isFixed={isFixed}
               isMobile={isMobile}
               activeItem={activeItem}
-              isPlaying={isPlaying} // Assuming isPlaying is defined in the parent component
-              setIsPlaying={setIsPlaying} // Assuming setIsPlaying is defined in the parent component
-              setIsFixed={setIsFixed} // Assuming setIsPlaying is defined in the parent component
+              isPlaying={isPlaying}
+              setIsPlaying={setIsPlaying}
+              setIsFixed={setIsFixed}
             />
             <DetailedDescription isMobile={isMobile} />
           </div>
@@ -186,6 +181,7 @@ export default function Home() {
                     circlePolygon={circlePolygon}
                     isPlaying={isPlaying}
                     setIsPlaying={setIsPlaying}
+                    isMobile={isMobile}
                   />
                 </div>
               )}
@@ -240,6 +236,7 @@ export default function Home() {
                     circlePolygon={circlePolygon}
                     isPlaying={isPlaying}
                     setIsPlaying={setIsPlaying}
+                    isMobile={isMobile}
                   />
                   <span style={{ textAlign: "center", lineHeight: 1.3 }}>
                     {(data as any).ferment

@@ -1,6 +1,6 @@
 export interface IPlayable {
-  play(): void;
-  stop(): void;
+  play(startTime?: number): void;
+  stop(time?: number): void;
 }
 
 export type FermentDataItem = {

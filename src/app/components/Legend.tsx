@@ -30,11 +30,10 @@ const Legend: React.FC<LegendProps> = ({
   setIsFixed,
   activeItem,
   isMobile,
-  isPlaying, // Deconstruct isPlaying from props
-  setIsPlaying, // Deconstruct setIsPlaying from props
+  isPlaying,
+  setIsPlaying,
 }) => {
   const controls = useAnimation();
-  const id = React.useId();
   const ref = useRef<HTMLDivElement>(null);
   const scrollSettings = { target: ref };
   const { scrollYProgress } = useScroll({
@@ -53,7 +52,7 @@ const Legend: React.FC<LegendProps> = ({
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
     const previous = scrollYProgress.getPrevious() || 0;
 
-    const currentScrollY = scrollY.get(); // Use get() instead of .current
+    const currentScrollY = scrollY.get();
 
     if (latest > previous && currentScrollY >= elementTop - 100 && !isFixed) {
       controls.start({
@@ -69,7 +68,29 @@ const Legend: React.FC<LegendProps> = ({
       setIsFixed(true);
     }
   });
-  return !isMobile ? (
+
+  if (isMobile) {
+    return (
+      <div className={styles.legend}>
+        {legendData.map((organism, i) => (
+          <div key={`legend-item-${i}`} className={styles.fixedLegendItems}>
+            <VoronoiCircles
+              wh={["50px", "50px"]}
+              data={organism}
+              circlePolygon={circlePolygon2}
+              legend={true}
+              isPlaying={isPlaying}
+              setIsPlaying={setIsPlaying}
+              isMobile={true}
+            />
+            <span>{organism.ferment}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
     <motion.div
       style={{
         backdropFilter,
@@ -115,6 +136,7 @@ const Legend: React.FC<LegendProps> = ({
                 legend={true}
                 isPlaying={isPlaying}
                 setIsPlaying={setIsPlaying}
+                isMobile={isMobile}
               />
               <span style={{ letterSpacing: "normal" }}>
                 {organism.ferment}
@@ -124,36 +146,6 @@ const Legend: React.FC<LegendProps> = ({
         })}
       </LayoutGroup>
     </motion.div>
-  ) : (
-    <div className={styles.legend}>
-      {legendData.map((organism, i) => {
-        const layoutId = `legend-item-${i}`;
-        return (
-          <div
-            key={layoutId}
-            onClick={() => handleLegendClick(organism)}
-            style={{
-              opacity:
-                activeItem === null || activeItem === organism.ferment
-                  ? 1
-                  : 0.5,
-              cursor: "pointer",
-            }}
-            className={styles.fixedLegendItems}
-          >
-            <VoronoiCircles
-              wh={["50px", "50px"]}
-              data={organism}
-              circlePolygon={circlePolygon2}
-              legend={true}
-              isPlaying={isPlaying}
-              setIsPlaying={setIsPlaying}
-            />
-            <span style={{ letterSpacing: "normal" }}>{organism.ferment}</span>
-          </div>
-        );
-      })}
-    </div>
   );
 };
 
