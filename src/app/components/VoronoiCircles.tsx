@@ -61,7 +61,6 @@ const Voronoi: React.FC<VoronoiProps> = ({
     if (!playersLoaded || typeof window === "undefined") {
       return;
     }
-    // Check that d.data and d.data.children are properly defined
     if (!d.data || !Array.isArray(d.data.children)) {
       console.error("Node data is missing or children are not iterable", d);
       return;
@@ -117,7 +116,6 @@ const Voronoi: React.FC<VoronoiProps> = ({
   };
 
   useEffect(() => {
-    console.log("Active Node after click:", activeNode);
     stopAllSynths(); // Stop all synths when active node changes
     if (activeNode) {
       onStartClick(activeNode); // Start synths only if there is an active node
