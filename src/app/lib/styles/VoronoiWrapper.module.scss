@@ -231,7 +231,7 @@
     align-items: center;
     justify-content: center;
     gap: 40px;
-    flex-direction: column;
+    flex-direction: row;
     @include respond-to(mobile) {
       flex-direction: column;
       gap: 40px;

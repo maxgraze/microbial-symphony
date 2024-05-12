@@ -186,14 +186,13 @@ export default function Home() {
                 </div>
               )}
               <p>
-                It&apos;s three main microorganism types,
-                <span className={`${styles.pill} ${styles.yeast}`}>yeast,</span>
+                <span className={`${styles.pill} ${styles.yeast}`}>Yeast,</span>
                 <span className={`${styles.pill} ${styles.mold}`}>mold</span>
                 and
                 <span className={`${styles.pill} ${styles.bacilli}`}>
-                  bacilli,{" "}
+                  bacilli{" "}
                 </span>
-                come together to create the rich, salty, umami taste-harmony we
+                come together to create this rich, salty, umami taste-harmony we
                 know as soy sauce.
               </p>
             </div>
