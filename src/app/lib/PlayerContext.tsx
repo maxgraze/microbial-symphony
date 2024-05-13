@@ -1,30 +1,5 @@
 import { Dispatch, createContext, useReducer } from "react";
 
-// Define the shape of the state
-export interface State {
-  players: any; // Define more specific types if possible
-  isPlaying: boolean;
-  showDrawer: boolean;
-  isFixed: boolean;
-  isDOMReady: boolean;
-  activeItem: string | null;
-  displayData: any[]; // Define more specific types if possible
-  isLoading: boolean;
-  data: any[]; // Define more specific types if possible
-}
-
-// Define the actions
-export type PlayerAction =
-  | { type: "SET_PLAYERS"; payload: any }
-  | { type: "TOGGLE_PLAYING"; payload: boolean }
-  | { type: "TOGGLE_DRAWER" }
-  | { type: "SET_FIXED"; payload: boolean }
-  | { type: "DOM_READY"; payload: boolean }
-  | { type: "SET_ACTIVE_ITEM"; payload: string | null }
-  | { type: "SET_DISPLAY_DATA"; payload: any[] }
-  | { type: "SET_LOADING"; payload: boolean }
-  | { type: "SET_DATA"; payload: any[] };
-
 // Define the context type
 export interface PlayerContextType {
   state: State;
@@ -44,6 +19,48 @@ export const initialState: State = {
   data: [],
 };
 
+interface Player {
+  id: string;
+  name: string;
+  // Additional properties...
+}
+
+interface DisplayItem {
+  id: string;
+  description: string;
+  // Additional properties...
+}
+
+interface DataItem {
+  id: string;
+  value: number;
+  // Additional properties...
+}
+
+export interface State {
+  players: Record<string, Player>;
+  isPlaying: boolean;
+  showDrawer: boolean;
+  isFixed: boolean;
+  isDOMReady: boolean;
+  activeItem: string | null;
+  displayData: DisplayItem[];
+  isLoading: boolean;
+  data: DataItem[];
+}
+
+export type PlayerAction =
+  | { type: "SET_PLAYERS"; payload: Record<string, Player> }
+  | { type: "TOGGLE_PLAYING"; payload: boolean }
+  | { type: "OPEN_DRAWER" } // Changed from toggle for clarity
+  | { type: "CLOSE_DRAWER" } // Changed from toggle for clarity
+  | { type: "SET_FIXED"; payload: boolean }
+  | { type: "DOM_READY"; payload: boolean }
+  | { type: "SET_ACTIVE_ITEM"; payload: string | null }
+  | { type: "SET_DISPLAY_DATA"; payload: DisplayItem[] }
+  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SET_DATA"; payload: DataItem[] };
+
 // This should already be defined correctly, just double-checking
 export const PlayerContext = createContext<PlayerContextType>({
   state: initialState, // Default initial state
@@ -62,15 +79,16 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     </PlayerContext.Provider>
   );
 };
-
 export const reducer = (state: State, action: PlayerAction): State => {
   switch (action.type) {
     case "SET_PLAYERS":
       return { ...state, players: action.payload };
     case "TOGGLE_PLAYING":
       return { ...state, isPlaying: !state.isPlaying };
-    case "TOGGLE_DRAWER":
-      return { ...state, showDrawer: !state.showDrawer };
+    case "OPEN_DRAWER":
+      return { ...state, showDrawer: true };
+    case "CLOSE_DRAWER":
+      return { ...state, showDrawer: false };
     case "SET_FIXED":
       return { ...state, isFixed: action.payload };
     case "DOM_READY":

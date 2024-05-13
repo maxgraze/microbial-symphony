@@ -5,6 +5,7 @@ import styles from "../lib/styles/VoronoiWrapper.module.scss";
 // Define the props type for clearer type checking and maintainability
 interface SoundPreferenceDrawerProps {
   isOpen: boolean;
+  isMobile: boolean;
   onClose: () => void;
   onEnableSound: () => void;
   onDisableSound: () => void;
@@ -15,6 +16,7 @@ const SoundPreferenceDrawer: React.FC<SoundPreferenceDrawerProps> = ({
   onClose,
   onEnableSound,
   onDisableSound,
+  isMobile,
 }) => {
   return (
     <Drawer
@@ -23,7 +25,7 @@ const SoundPreferenceDrawer: React.FC<SoundPreferenceDrawerProps> = ({
       closable={false}
       onClose={onClose}
       open={isOpen}
-      height={200}
+      height={isMobile ? 250 : 200}
     >
       <p>
         By allowing sound, you can <i>hear</i> the combination of the

@@ -35,18 +35,6 @@ const Sonification = dynamic(() => import("./components/Sonification"), {
 export default function Home() {
   const isMobile = useCheckMobile();
 
-  // if (isMobile)
-  //   <div
-  //     style={{
-  //       fontFamily: "Figtree",
-  //       fontSize: "2em",
-  //       margin: "60px 40px",
-  //       lineHeight: "1.66em",
-  //     }}
-  //   >
-  //     Sorry! This experience is currently only available on desktop.
-  //   </div>;
-
   const [players, setPlayers] = useState<any>({});
   const [isPlaying, setIsPlaying] = useState(true); //change to false
   const [isFixed, setIsFixed] = useState(false); // State to toggle fixed positioning
@@ -86,26 +74,21 @@ export default function Home() {
     });
   }, [dispatch]);
 
+  useEffect(() => {
+    dispatch({ type: "OPEN_DRAWER" });
+  }, [dispatch]);
   const pageRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    dispatch({ type: "TOGGLE_DRAWER" });
-  }, []);
-
-  const handleCloseDrawer = () => {
-    dispatch({ type: "TOGGLE_DRAWER" });
-  };
+  const closeDrawer = () => dispatch({ type: "CLOSE_DRAWER" });
 
   const handleEnableSound = async () => {
-    setIsPlaying(true);
-    dispatch({ type: "TOGGLE_DRAWER" });
-
-    // setAudioReady(true);
+    dispatch({ type: "TOGGLE_PLAYING", payload: true });
+    closeDrawer();
   };
 
   const handleDisableSound = () => {
-    setIsPlaying(false);
-    dispatch({ type: "TOGGLE_DRAWER" });
+    dispatch({ type: "TOGGLE_PLAYING", payload: false });
+    closeDrawer();
   };
 
   if (isLoading) {
@@ -126,7 +109,8 @@ export default function Home() {
     <main className={styles.container}>
       <SoundPreferenceDrawer
         isOpen={state.showDrawer}
-        onClose={handleCloseDrawer}
+        isMobile={isMobile}
+        onClose={closeDrawer}
         onEnableSound={handleEnableSound}
         onDisableSound={handleDisableSound}
       />

@@ -16,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <Head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="stylesheet" href="https://use.typekit.net/zur3vau.css" />
       </Head>
       <body>{children}</body>
