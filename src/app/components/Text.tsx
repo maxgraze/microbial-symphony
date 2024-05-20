@@ -37,18 +37,16 @@ export const DetailedDescription = ({ isMobile }: any) => (
     <br />
     Imagine you are sitting alongside the Seine canal in Paris, enjoying an
     aperitif in the gentle warmth of the sun: you picked out a crusty baguette,
-    risen with <span className={`${styles.pill} ${styles.yeast}`}>yeast</span>,
+    risen with <span className={`${styles.pill} ${styles.yeast}`}>yeast,</span>
     topped it with rich brie—its creamy tang courtesy of
     <span className={`${styles.pill} ${styles.lactic_acid_bacteria}`}>
-      {" "}
-      lactic acid bacteria,{" "}
-    </span>{" "}
-    and protective layer of{" "}
-    <span className={`${styles.pill} ${styles.mold}`}>mold</span>
+      lactic acid bacteria,
+    </span>
+    and protective layer of
+    <span className={`${styles.pill} ${styles.mold}`}>mold.</span>
     Alongside, you savor cornichons, their satisfying crunch and tartness,
     brought to you by
     <span className={`${styles.pill} ${styles.acetic_acid_bacteria}`}>
-      {" "}
       acetic acid bacteria.
     </span>
     <br />

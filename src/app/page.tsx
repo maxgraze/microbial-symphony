@@ -40,10 +40,10 @@ export default function Home() {
   const { data } = useFetchData();
   const { state, dispatch } = useContext(PlayerContext);
 
-  const { activeItem, displayData, isPlaying, showDrawer } = state;
+  const { activeItem, displayData, isPlaying } = state;
 
   const filteredData = useMemo(() => {
-    if (!activeItem) return data; // No item selected, return full dataset
+    if (!activeItem) return data;
 
     const targetOrganism =
       activeItem.toLowerCase() === "other microorganism"
@@ -103,7 +103,6 @@ export default function Home() {
 
   useEffect(() => {
     if (state.isPlaying) {
-      // Start the sound
       Tone.Transport.start();
     } else {
       console.log(state.isPlaying);
@@ -156,7 +155,6 @@ export default function Home() {
             isMobile={isMobile}
             activeItem={activeItem}
             isPlaying={isPlaying}
-            // setIsPlaying={setIsPlaying}
             setIsFixed={setIsFixed}
           />
           <DetailedDescription isMobile={isMobile} />
@@ -182,7 +180,6 @@ export default function Home() {
                   data={soysauce}
                   circlePolygon={circlePolygon}
                   isPlaying={isPlaying}
-                  // setIsPlaying={setIsPlaying}
                   isMobile={isMobile}
                 />
               </div>
@@ -236,7 +233,6 @@ export default function Home() {
                   key={(data as any).ferment}
                   circlePolygon={circlePolygon}
                   isPlaying={isPlaying}
-                  // setIsPlaying={setIsPlaying}
                   isMobile={isMobile}
                 />
                 <span style={{ textAlign: "center", lineHeight: 1.3 }}>

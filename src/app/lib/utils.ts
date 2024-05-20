@@ -1,16 +1,4 @@
-import { createContext } from "react";
-import { FermentData, PlayerContextType } from "./types";
-
-const defaultPlayerContextValues: PlayerContextType = {
-  players: {}, // Assuming 'players' should be an object; adjust as necessary
-  setPlayers: () => {}, // No-op function as default
-  isPlaying: false,
-  setIsPlaying: () => {}, // No-op function as default
-};
-
-export const PlayerContext = createContext<PlayerContextType>(
-  defaultPlayerContextValues
-);
+import { FermentData } from "./types";
 
 export function nFormatter(num: number, digits?: number) {
   if (!num) return "0";
