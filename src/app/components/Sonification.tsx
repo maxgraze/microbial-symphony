@@ -3,7 +3,7 @@ import { useEffect, useState, useContext, useRef } from "react";
 import { csv } from "d3";
 
 import * as Tone from "tone";
-import { PlayerContext } from "../lib/utils";
+import { PlayerContext } from "../lib/PlayerContext";
 import { Player } from "../lib/Classes";
 
 const Sonification = () => {
@@ -17,9 +17,9 @@ const Sonification = () => {
     throw new Error("Sonification must be used within a PlayerProvider");
   }
 
-  const { players, setPlayers } = playerContext;
+  const { state, dispatch } = useContext(PlayerContext);
+  const { players } = state;
 
-  const [isLoaded, setLoaded] = useState(false);
   const [data, setData] = useState({});
 
   useEffect(() => {
@@ -108,7 +108,14 @@ const Sonification = () => {
           Tone.Destination
         );
 
-        let yeast = new Player(yeast_synth, yeast_notes, "8n", 250);
+        let yeast = new Player(
+          "yeast",
+          "Yeast",
+          yeast_synth,
+          yeast_notes,
+          "8n",
+          250
+        );
 
         let mold_synth = new Tone.Synth();
 
@@ -121,7 +128,14 @@ const Sonification = () => {
         mold_synth.chain(mold_volume);
         mold_delay.toDestination();
 
-        let mold = new Player(mold_synth, scaleNotes, "8n", 500);
+        let mold = new Player(
+          "mold",
+          "Mold",
+          mold_synth,
+          scaleNotes,
+          "8n",
+          500
+        );
 
         const AAB_synth = new Tone.MonoSynth({
           oscillator: { type: "triangle" },
@@ -161,18 +175,24 @@ const Sonification = () => {
         const LAB_delay = 750; // bacilli plays every three-quarters of a second
 
         const acetic_acid_bacteria = new Player(
+          "acetic_acid_bacteria",
+          "Acetic Acid Bacteria",
           AAB_synth,
           AAB_notes,
           "8n",
           AAB_delay
         );
         const bacilli = new Player(
+          "bacilli",
+          "Bacilli",
           bacilli_synth,
           bacilli_notes,
           "8n",
           bacilli_delay
         );
         const lactic_acid_bacteria = new Player(
+          "lactic_acid_bacteria",
+          "Lactic Acid Bacteria",
           LAB_synth,
           LAB_notes,
           "8n",
@@ -215,23 +235,30 @@ const Sonification = () => {
 
         const other_filter = new Tone.Filter(5000, "lowpass").toDestination();
         other_synth.connect(other_filter);
-        const other = new Player(other_synth, ["E3"], "8n");
+        const other = new Player(
+          "other",
+          "Other",
+          other_synth,
+          ["E3"],
+          "8n",
+          0
+        );
 
-        setPlayers({
-          lactic_acid_bacteria,
-          mold,
-          yeast,
-          acetic_acid_bacteria,
-          bacilli,
-          other,
+        dispatch({
+          type: "SET_PLAYERS",
+          payload: {
+            lactic_acid_bacteria,
+            mold,
+            yeast,
+            acetic_acid_bacteria,
+            bacilli,
+            other,
+          },
         });
-
-        setLoaded(true);
       };
-
       setupAudioComponents();
     }
-  }, [initialized, data]);
+  }, [initialized, data, dispatch]);
 
   return <></>;
 };

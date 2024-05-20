@@ -2,6 +2,8 @@ import * as Tone from "tone";
 import { IPlayable } from "./types";
 
 export class NoisePlayer implements IPlayable {
+  id: string;
+  name: string;
   synth: Tone.NoiseSynth;
   lfo: Tone.LFO;
   duration: string;
@@ -9,11 +11,15 @@ export class NoisePlayer implements IPlayable {
   delay: number;
 
   constructor(
+    id: string,
+    name: string,
     synth: Tone.NoiseSynth,
     lfo: Tone.LFO,
     duration: string,
     delay: number = 500
   ) {
+    this.id = id;
+    this.name = name;
     this.synth = synth;
     this.lfo = lfo;
     this.duration = duration;
@@ -53,13 +59,19 @@ export class Player implements IPlayable {
   timeoutId: NodeJS.Timeout | null = null;
   delay: number;
   release: string;
+  name: string;
+  id: string;
 
   constructor(
+    id: string,
+    name: string,
     synth: Tone.Synth | Tone.FMSynth | Tone.PolySynth | Tone.MonoSynth,
     notes: Array<number | string>,
     release: string = "0.2",
     delay: number = 500
   ) {
+    this.id = id;
+    this.name = name;
     this.synth = synth;
     this.notes = notes;
     this.release = release;

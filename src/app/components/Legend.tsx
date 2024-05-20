@@ -19,7 +19,7 @@ interface LegendProps {
   isMobile: boolean;
   activeItem: string | null;
   isPlaying: boolean; // Add isPlaying to props
-  setIsPlaying: (isPlaying: boolean) => void; // Add setIsPlaying to props
+  // setIsPlaying: (isPlaying: boolean) => void; // Add setIsPlaying to props
   setIsFixed: (isFixed: boolean) => void; // Add setIsPlaying to props
 }
 
@@ -31,7 +31,7 @@ const Legend: React.FC<LegendProps> = ({
   activeItem,
   isMobile,
   isPlaying,
-  setIsPlaying,
+  // setIsPlaying,
 }) => {
   const controls = useAnimation();
   const ref = useRef<HTMLDivElement>(null);
@@ -80,7 +80,7 @@ const Legend: React.FC<LegendProps> = ({
               circlePolygon={circlePolygon2}
               legend={true}
               isPlaying={isPlaying}
-              setIsPlaying={setIsPlaying}
+              // setIsPlaying={setIsPlaying}
               isMobile={true}
             />
             <span>{organism.ferment}</span>
@@ -135,7 +135,7 @@ const Legend: React.FC<LegendProps> = ({
                 circlePolygon={circlePolygon2}
                 legend={true}
                 isPlaying={isPlaying}
-                setIsPlaying={setIsPlaying}
+                // setIsPlaying={setIsPlaying}
                 isMobile={isMobile}
               />
               <span style={{ letterSpacing: "normal" }}>

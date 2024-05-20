@@ -1,5 +1,5 @@
+"use client";
 import { Dispatch, createContext, useReducer } from "react";
-
 // Define the context type
 export interface PlayerContextType {
   state: State;
@@ -84,7 +84,12 @@ export const reducer = (state: State, action: PlayerAction): State => {
     case "SET_PLAYERS":
       return { ...state, players: action.payload };
     case "TOGGLE_PLAYING":
-      return { ...state, isPlaying: !state.isPlaying };
+      console.log(
+        "TOGGLE_PLAYING action dispatched with payload:",
+        action.payload
+      );
+      return { ...state, isPlaying: action.payload };
+
     case "OPEN_DRAWER":
       return { ...state, showDrawer: true };
     case "CLOSE_DRAWER":

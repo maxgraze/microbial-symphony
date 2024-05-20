@@ -1,11 +1,10 @@
 "use client";
 import styles from "./lib/styles/VoronoiWrapper.module.scss";
 import "./page.module.css";
-import { useEffect, useMemo, useRef, useState, useReducer } from "react";
+import { useEffect, useMemo, useRef, useState, useContext } from "react";
 import {
   circlePolygon,
   legendData,
-  PlayerContext,
   soysauce,
   containerVariants,
   childVariants,
@@ -21,12 +20,14 @@ import SoundPreferenceDrawer from "./components/SoundPreferenceDrawer";
 import Legend from "./components/Legend";
 import useFetchData from "./lib/hooks/useFetchData";
 import useCheckMobile from "./lib/hooks/useCheckMobile";
-import { initialState, reducer } from "./lib/PlayerContext";
+import { PlayerContext } from "./lib/PlayerContext";
+
 import {
   DetailedDescription,
   Introduction,
   MicroorganismInfo,
 } from "./components/Text";
+import * as Tone from "tone";
 
 const Sonification = dynamic(() => import("./components/Sonification"), {
   ssr: false, // Disable server-side rendering for Sonification
@@ -35,13 +36,11 @@ const Sonification = dynamic(() => import("./components/Sonification"), {
 export default function Home() {
   const isMobile = useCheckMobile();
 
-  const [players, setPlayers] = useState<any>({});
-  const [isPlaying, setIsPlaying] = useState(true); //change to false
   const [isFixed, setIsFixed] = useState(false); // State to toggle fixed positioning
-  const { data, isLoading } = useFetchData();
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const { data } = useFetchData();
+  const { state, dispatch } = useContext(PlayerContext);
 
-  const { activeItem, displayData } = state;
+  const { activeItem, displayData, isPlaying, showDrawer } = state;
 
   const filteredData = useMemo(() => {
     if (!activeItem) return data; // No item selected, return full dataset
@@ -69,9 +68,12 @@ export default function Home() {
   }, [filteredData, dispatch]);
 
   useEffect(() => {
-    requestAnimationFrame(() => {
-      dispatch({ type: "DOM_READY", payload: true });
-    });
+    // Simulate data loading
+    setTimeout(() => {
+      dispatch({ type: "SET_LOADING", payload: false });
+    }, 2000);
+
+    dispatch({ type: "OPEN_DRAWER" });
   }, [dispatch]);
 
   useEffect(() => {
@@ -82,6 +84,14 @@ export default function Home() {
   const closeDrawer = () => dispatch({ type: "CLOSE_DRAWER" });
 
   const handleEnableSound = async () => {
+    if (Tone.context.state !== "running") {
+      try {
+        await Tone.start();
+        console.log("Audio is ready");
+      } catch (error) {
+        console.error("Failed to start audio:", error);
+      }
+    }
     dispatch({ type: "TOGGLE_PLAYING", payload: true });
     closeDrawer();
   };
@@ -91,7 +101,17 @@ export default function Home() {
     closeDrawer();
   };
 
-  if (isLoading) {
+  useEffect(() => {
+    if (state.isPlaying) {
+      // Start the sound
+      Tone.Transport.start();
+    } else {
+      console.log(state.isPlaying);
+      Tone.Transport.stop();
+    }
+  }, [state.isPlaying]);
+
+  if (state.isLoading) {
     return (
       <div
         style={{
@@ -114,128 +134,125 @@ export default function Home() {
         onEnableSound={handleEnableSound}
         onDisableSound={handleDisableSound}
       />
-      <PlayerContext.Provider
-        value={{ players, setPlayers, isPlaying, setIsPlaying }}
-      >
-        <Sonification />
 
-        <motion.div ref={pageRef} layout={true}>
-          <Introduction />
+      <Sonification />
 
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "40px",
-            }}
-          >
-            <MicroorganismInfo isMobile={isMobile} />
-            <Legend
-              legendData={legendData}
-              handleLegendClick={handleLegendClick}
-              isFixed={isFixed}
-              isMobile={isMobile}
-              activeItem={activeItem}
-              isPlaying={isPlaying}
-              setIsPlaying={setIsPlaying}
-              setIsFixed={setIsFixed}
-            />
-            <DetailedDescription isMobile={isMobile} />
-          </div>
-          <div className={styles.soysauceDiv}>
-            <h1
-              style={{
-                fontSize: "2em",
-              }}
-            >
-              What does soy sauce sound like?
-            </h1>
-            <div>
-              {soysauce && (
-                <div
-                  style={{
-                    transform: "scale(1.4)",
-                  }}
-                >
-                  <VoronoiCircles
-                    wh={["100px", "100px"]}
-                    key={"example-1"}
-                    data={soysauce}
-                    circlePolygon={circlePolygon}
-                    isPlaying={isPlaying}
-                    setIsPlaying={setIsPlaying}
-                    isMobile={isMobile}
-                  />
-                </div>
-              )}
-              <p>
-                <span className={`${styles.pill} ${styles.yeast}`}>Yeast,</span>
-                <span className={`${styles.pill} ${styles.mold}`}>mold</span>
-                and
-                <span className={`${styles.pill} ${styles.bacilli}`}>
-                  bacilli{" "}
-                </span>
-                come together to create this rich, salty, umami taste-harmony we
-                know as soy sauce.
-              </p>
-            </div>
-          </div>
-        </motion.div>
-        <h1
+      <motion.div ref={pageRef} layout={true}>
+        <Introduction />
+
+        <div
           style={{
-            textAlign: "center",
-            marginBottom: "40px",
-
-            fontSize: "2em",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "40px",
           }}
         >
-          Explore the melody of other ferments below.
-        </h1>
-        <AnimatePresence>
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            exit="hidden"
-            layout
-            className={styles.voronoiGrid}
+          <MicroorganismInfo isMobile={isMobile} />
+          <Legend
+            legendData={legendData}
+            handleLegendClick={handleLegendClick}
+            isFixed={isFixed}
+            isMobile={isMobile}
+            activeItem={activeItem}
+            isPlaying={isPlaying}
+            // setIsPlaying={setIsPlaying}
+            setIsFixed={setIsFixed}
+          />
+          <DetailedDescription isMobile={isMobile} />
+        </div>
+        <div className={styles.soysauceDiv}>
+          <h1
+            style={{
+              fontSize: "2em",
+            }}
           >
-            {displayData &&
-              displayData.map((data, i) => (
-                <motion.div
-                  variants={childVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  layout="position"
+            What does soy sauce sound like?
+          </h1>
+          <div>
+            {soysauce && (
+              <div
+                style={{
+                  transform: "scale(1.4)",
+                }}
+              >
+                <VoronoiCircles
+                  wh={["100px", "100px"]}
+                  key={"example-1"}
+                  data={soysauce}
+                  circlePolygon={circlePolygon}
+                  isPlaying={isPlaying}
+                  // setIsPlaying={setIsPlaying}
+                  isMobile={isMobile}
+                />
+              </div>
+            )}
+            <p>
+              <span className={`${styles.pill} ${styles.yeast}`}>Yeast,</span>
+              <span className={`${styles.pill} ${styles.mold}`}>mold</span>
+              and
+              <span className={`${styles.pill} ${styles.bacilli}`}>
+                bacilli{" "}
+              </span>
+              come together to create this rich, salty, umami taste-harmony we
+              know as soy sauce.
+            </p>
+          </div>
+        </div>
+      </motion.div>
+      <h1
+        style={{
+          textAlign: "center",
+          marginBottom: "40px",
+
+          fontSize: "2em",
+        }}
+      >
+        Explore the melody of other ferments below.
+      </h1>
+      <AnimatePresence>
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          exit="hidden"
+          layout
+          className={styles.voronoiGrid}
+        >
+          {displayData &&
+            displayData.map((data, i) => (
+              <motion.div
+                variants={childVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                layout="position"
+                key={(data as any).ferment}
+                className={styles.voronoiCell}
+              >
+                <VoronoiCircles
+                  wh={["100px", "100px"]}
+                  data={data}
                   key={(data as any).ferment}
-                  className={styles.voronoiCell}
-                >
-                  <VoronoiCircles
-                    wh={["100px", "100px"]}
-                    data={data}
-                    key={(data as any).ferment}
-                    circlePolygon={circlePolygon}
-                    isPlaying={isPlaying}
-                    setIsPlaying={setIsPlaying}
-                    isMobile={isMobile}
-                  />
-                  <span style={{ textAlign: "center", lineHeight: 1.3 }}>
-                    {(data as any).ferment
-                      .split(/(\([^)]+\))/)
-                      .map((part: string, index: number) => (
-                        <React.Fragment key={index}>
-                          {index !== 0 && /\(/.test(part) && <br />}
-                          {part}
-                        </React.Fragment>
-                      ))}
-                  </span>
-                </motion.div>
-              ))}
-          </motion.div>
-        </AnimatePresence>
-      </PlayerContext.Provider>
+                  circlePolygon={circlePolygon}
+                  isPlaying={isPlaying}
+                  // setIsPlaying={setIsPlaying}
+                  isMobile={isMobile}
+                />
+                <span style={{ textAlign: "center", lineHeight: 1.3 }}>
+                  {(data as any).ferment
+                    .split(/(\([^)]+\))/)
+                    .map((part: string, index: number) => (
+                      <React.Fragment key={index}>
+                        {index !== 0 && /\(/.test(part) && <br />}
+                        {part}
+                      </React.Fragment>
+                    ))}
+                </span>
+              </motion.div>
+            ))}
+        </motion.div>
+      </AnimatePresence>
       <div className={styles.motivation}>
         <h1 style={{ fontFamily: "Margo Condensed" }}>Motivation</h1>
         <div>

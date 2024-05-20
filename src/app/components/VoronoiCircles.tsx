@@ -3,18 +3,16 @@ import React, { memo, useContext, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { fills } from "../lib/styles/fills";
 import { voronoiTreemap } from "d3-voronoi-treemap";
-import { PlayerContext } from "../lib/utils";
+import { PlayerContext } from "../lib/PlayerContext";
 import { Player, NoisePlayer } from "../lib/Classes";
 import * as Tone from "tone";
 import { motion } from "framer-motion";
 import { IPlayable } from "../lib/types";
-
 interface VoronoiProps {
   data: any;
   circlePolygon: any;
   legend?: boolean;
   isPlaying: boolean;
-  setIsPlaying: (isPlaying: boolean) => void;
   wh: [string, string];
   key?: string;
   isMobile: boolean;
@@ -34,8 +32,8 @@ const Voronoi: React.FC<VoronoiProps> = ({
 }) => {
   const [activeNode, setActiveNode] = useState<VoronoiNode | null>(null);
   const ref = useRef<SVGSVGElement | null>(null);
-
-  const players = useContext(PlayerContext)?.players;
+  const { state, dispatch } = useContext(PlayerContext); // Access state and dispatch from context
+  const { players } = state;
 
   const playingSynths = useRef<any[]>([]);
 
@@ -58,7 +56,8 @@ const Voronoi: React.FC<VoronoiProps> = ({
   };
 
   const onStartClick = async (d: VoronoiNode) => {
-    if (!playersLoaded || typeof window === "undefined") {
+    // if (!playersLoaded || typeof window === "undefined") {
+    if (!state.isPlaying || !playersLoaded || typeof window === "undefined") {
       return;
     }
     if (!d.data || !Array.isArray(d.data.children)) {
@@ -73,6 +72,8 @@ const Voronoi: React.FC<VoronoiProps> = ({
         console.log("Audio is ready");
       } catch (error) {
         console.error("Error starting Tone.js", error);
+        alert("Please ensure your device is not in silent mode to play audio.");
+
         return;
       }
     }
@@ -117,7 +118,7 @@ const Voronoi: React.FC<VoronoiProps> = ({
 
   useEffect(() => {
     stopAllSynths(); // Stop all synths when active node changes
-    if (activeNode) {
+    if (activeNode && state.isPlaying) {
       onStartClick(activeNode); // Start synths only if there is an active node
     }
   }, [activeNode]);
