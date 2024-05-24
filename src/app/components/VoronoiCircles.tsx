@@ -69,7 +69,6 @@ const Voronoi: React.FC<VoronoiProps> = ({
     if (Tone.context.state !== "running") {
       try {
         await Tone.start();
-        console.log("Audio is ready");
       } catch (error) {
         console.error("Error starting Tone.js", error);
         alert("Please ensure your device is not in silent mode to play audio.");

@@ -84,10 +84,15 @@ export default function Home() {
   const closeDrawer = () => dispatch({ type: "CLOSE_DRAWER" });
 
   const handleEnableSound = async () => {
+    if (isMobile) {
+      alert(
+        "If you are on an iPhone, set your phone to ring in order to allow sound."
+      );
+    }
+
     if (Tone.context.state !== "running") {
       try {
         await Tone.start();
-        console.log("Audio is ready");
       } catch (error) {
         console.error("Failed to start audio:", error);
       }
@@ -105,7 +110,6 @@ export default function Home() {
     if (state.isPlaying) {
       Tone.Transport.start();
     } else {
-      console.log(state.isPlaying);
       Tone.Transport.stop();
     }
   }, [state.isPlaying]);

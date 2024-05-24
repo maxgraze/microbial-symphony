@@ -84,10 +84,6 @@ export const reducer = (state: State, action: PlayerAction): State => {
     case "SET_PLAYERS":
       return { ...state, players: action.payload };
     case "TOGGLE_PLAYING":
-      console.log(
-        "TOGGLE_PLAYING action dispatched with payload:",
-        action.payload
-      );
       return { ...state, isPlaying: action.payload };
 
     case "OPEN_DRAWER":
