@@ -7,7 +7,7 @@ import {
   useMotionValueEvent,
   useScroll,
 } from "framer-motion";
-import VoronoiCircles from "./VoronoiCircles"; // Adjust the import path as necessary
+import VoronoiCircles from "./VoronoiCircles"; 
 import { circlePolygon2, SPRING } from "../lib/utils";
 import styles from "../lib/styles/VoronoiWrapper.module.scss";
 import { FermentDataItem } from "../lib/types";
@@ -18,8 +18,8 @@ interface LegendProps {
   isFixed: boolean;
   isMobile: boolean;
   activeItem: string | null;
-  isPlaying: boolean; // Add isPlaying to props
-  setIsFixed: (isFixed: boolean) => void; // Add setIsPlaying to props
+  isPlaying: boolean; 
+  setIsFixed: (isFixed: boolean) => void; 
 }
 
 const Legend: React.FC<LegendProps> = ({
