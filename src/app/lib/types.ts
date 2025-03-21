@@ -15,8 +15,8 @@ export type FermentDataItem = {
 export type FermentData = FermentDataItem[];
 
 export interface PlayerContextType {
-  players: any; // Consider specifying a more detailed type than 'any' if possible
-  setPlayers: React.Dispatch<React.SetStateAction<any>>; // Same here for more specific typing
+  players: any; 
+  setPlayers: React.Dispatch<React.SetStateAction<any>>; 
   isPlaying: boolean;
   setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
 }
