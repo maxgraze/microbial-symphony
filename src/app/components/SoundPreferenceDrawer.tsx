@@ -2,7 +2,6 @@ import React from "react";
 import { Drawer, Button } from "antd";
 import styles from "../lib/styles/VoronoiWrapper.module.scss";
 
-// Define the props type for clearer type checking and maintainability
 interface SoundPreferenceDrawerProps {
   isOpen: boolean;
   isMobile: boolean;
