@@ -1,12 +1,10 @@
 "use client";
 import { Dispatch, createContext, useReducer } from "react";
-// Define the context type
 export interface PlayerContextType {
   state: State;
   dispatch: Dispatch<PlayerAction>;
 }
 
-// Define only the state part as the initialState
 export const initialState: State = {
   players: {},
   isPlaying: false,
@@ -22,19 +20,16 @@ export const initialState: State = {
 interface Player {
   id: string;
   name: string;
-  // Additional properties...
 }
 
 interface DisplayItem {
   id: string;
   description: string;
-  // Additional properties...
 }
 
 interface DataItem {
   id: string;
   value: number;
-  // Additional properties...
 }
 
 export interface State {
@@ -52,8 +47,8 @@ export interface State {
 export type PlayerAction =
   | { type: "SET_PLAYERS"; payload: Record<string, Player> }
   | { type: "TOGGLE_PLAYING"; payload: boolean }
-  | { type: "OPEN_DRAWER" } // Changed from toggle for clarity
-  | { type: "CLOSE_DRAWER" } // Changed from toggle for clarity
+  | { type: "OPEN_DRAWER" } 
+  | { type: "CLOSE_DRAWER" } 
   | { type: "SET_FIXED"; payload: boolean }
   | { type: "DOM_READY"; payload: boolean }
   | { type: "SET_ACTIVE_ITEM"; payload: string | null }
@@ -61,17 +56,15 @@ export type PlayerAction =
   | { type: "SET_LOADING"; payload: boolean }
   | { type: "SET_DATA"; payload: DataItem[] };
 
-// This should already be defined correctly, just double-checking
 export const PlayerContext = createContext<PlayerContextType>({
-  state: initialState, // Default initial state
-  dispatch: () => undefined, // Placeholder dispatch function
+  state: initialState, 
+  dispatch: () => undefined, 
 });
 
-// PlayerProvider uses the correct initialState
 export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [state, dispatch] = useReducer(reducer, initialState); // Correct use of initialState
+  const [state, dispatch] = useReducer(reducer, initialState); 
 
   return (
     <PlayerContext.Provider value={{ state, dispatch }}>
