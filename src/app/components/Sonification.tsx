@@ -42,7 +42,7 @@ const Sonification = () => {
   }, []);
 
   useEffect(() => {
-    // Instantiate your Tone.js objects and store them in the refs
+    // Instantiate Tone.js objects and store them in the refs
     compressorRef.current = new Tone.Compressor({
       threshold: -30,
       ratio: 3,
@@ -58,12 +58,6 @@ const Sonification = () => {
     const limiter = limiterRef.current;
     const volume = volumeRef.current;
 
-    if (compressor && limiter && volume) {
-      // Connect the components in your audio signal chain
-      // Example: compressor.chain(limiter, volume, Tone.Destination);
-    }
-
-    // Signal that setup is complete
     setInitialized(true);
   }, []);
 
@@ -71,7 +65,6 @@ const Sonification = () => {
     if (!initialized) return;
     console;
     // Use the objects for creating synths
-    // Make sure you check if the objects are not null before using them
     if (compressorRef.current && limiterRef.current && volumeRef.current) {
       const setupAudioComponents = async () => {
         let scaleNotes = ["E3", "G3", "A3", "B3", "D4", "E4"]; // E minor pentatonic scale
