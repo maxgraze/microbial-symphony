@@ -178,8 +178,8 @@ export const containerVariants = {
     transition: {
       staggerChildren: 0.5,
       type: "spring",
-      stiffness: 90, // Lowered for less abrupt movement
-      damping: 30, // Increased to reduce oscillation
+      stiffness: 90, 
+      damping: 30,
     },
   },
 };
@@ -191,9 +191,9 @@ export const childVariants = {
     y: 0,
     transition: {
       type: "spring",
-      stiffness: 90, // Consistency with container
+      stiffness: 90,
       damping: 30,
-      mass: 0.8, // Lowered mass for a more responsive feel
+      mass: 0.8, 
     },
   },
   exit: {
