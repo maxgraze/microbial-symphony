@@ -7,7 +7,7 @@ export class NoisePlayer implements IPlayable {
   synth: Tone.NoiseSynth;
   lfo: Tone.LFO;
   duration: string;
-  timeoutId: NodeJS.Timeout | null = null;
+  scheduleId: number | null = null;
   delay: number;
 
   constructor(
@@ -27,28 +27,33 @@ export class NoisePlayer implements IPlayable {
   }
 
   play(startTime?: number): void {
-    // Make startTime optional to match IPlayable
+    this.clearSchedule();
     if (typeof startTime === "number") {
-      const timeUntilStart = startTime - Tone.now();
-      this.timeoutId = setTimeout(() => {
-        this.playNoiseSequence(); // Start playing the sequence
-      }, timeUntilStart);
+      this.scheduleId = Tone.Transport.scheduleOnce((time) => {
+        this.scheduleId = null;
+        this.playNoiseSequence(time);
+      }, startTime);
     } else {
-      this.playNoiseSequence(); // Start immediately if no startTime is provided
+      this.playNoiseSequence(Tone.now());
     }
   }
 
   stop(): void {
-    if (this.timeoutId) {
-      clearTimeout(this.timeoutId);
-      this.timeoutId = null;
-    }
+    this.clearSchedule();
     this.lfo.stop();
     this.synth.triggerRelease();
   }
-  playNoiseSequence(): void {
-    this.synth.triggerAttack();
-    this.lfo.start();
+
+  private clearSchedule(): void {
+    if (this.scheduleId !== null) {
+      Tone.Transport.clear(this.scheduleId);
+      this.scheduleId = null;
+    }
+  }
+
+  playNoiseSequence(time: number): void {
+    this.synth.triggerAttack(time);
+    this.lfo.start(time);
   }
 }
 
@@ -56,7 +61,7 @@ export class Player implements IPlayable {
   synth: Tone.Synth | Tone.FMSynth | Tone.PolySynth | Tone.MonoSynth;
   notes: Array<number | string>;
   index: number = 0;
-  timeoutId: NodeJS.Timeout | null = null;
+  scheduleId: number | null = null;
   delay: number;
   release: string;
   name: string;
@@ -78,33 +83,36 @@ export class Player implements IPlayable {
     this.delay = delay;
   }
 
-  play(): void;
-  play(startTime: number): void;
-  play(startTime?: number): void {
-    if (typeof startTime === "number") {
-      const timeUntilStart = startTime - Tone.now();
-      this.timeoutId = setTimeout(() => {
-        this.playNoteSequence(); // Start playing the sequence
-      }, timeUntilStart);
-    } else {
-      this.playNoteSequence(); // Start immediately
+  play(startTime: number = Tone.Transport.seconds): void {
+    this.clearSchedule();
+    this.index = 0;
+
+    const intervalSeconds = this.delay / 1000;
+    if (intervalSeconds <= 0) {
+      throw new Error(`Player ${this.id} requires a positive delay`);
     }
+
+    this.scheduleId = Tone.Transport.scheduleRepeat(
+      (time) => this.playNote(time),
+      intervalSeconds,
+      startTime
+    );
   }
 
   stop(time?: number): void {
-    if (this.timeoutId) {
-      clearTimeout(this.timeoutId);
-      this.timeoutId = null;
-    }
-    this.synth.triggerRelease(time ? time : Tone.now());
+    this.clearSchedule();
+    this.synth.triggerRelease(time ?? Tone.now());
   }
 
-  playNoteSequence(): void {
-    let note = this.notes[this.index++ % this.notes.length];
-    this.synth.triggerAttackRelease(note, this.release, "+0.1");
-    // Schedule the next note
-    this.timeoutId = setTimeout(() => {
-      this.playNoteSequence(); // Continue playing the next note in sequence
-    }, this.delay);
+  private clearSchedule(): void {
+    if (this.scheduleId !== null) {
+      Tone.Transport.clear(this.scheduleId);
+      this.scheduleId = null;
+    }
+  }
+
+  private playNote(time: number): void {
+    const note = this.notes[this.index++ % this.notes.length];
+    this.synth.triggerAttackRelease(note, this.release, time);
   }
 }

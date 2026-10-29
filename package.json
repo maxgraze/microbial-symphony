@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:audio": "node --test tests/audio-scheduling.test.cjs"
   },
   "dependencies": {
     "antd": "^5.14.1",

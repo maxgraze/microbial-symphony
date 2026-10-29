@@ -1,4 +1,6 @@
 export interface IPlayable {
+  id: string;
+  name: string;
   play(startTime?: number): void;
   stop(time?: number): void;
 }

@@ -1,5 +1,6 @@
 "use client";
 import { Dispatch, createContext, useReducer } from "react";
+import type { IPlayable } from "./types";
 export interface PlayerContextType {
   state: State;
   dispatch: Dispatch<PlayerAction>;
@@ -17,11 +18,6 @@ export const initialState: State = {
   data: [],
 };
 
-interface Player {
-  id: string;
-  name: string;
-}
-
 interface DisplayItem {
   id: string;
   description: string;
@@ -33,7 +29,7 @@ interface DataItem {
 }
 
 export interface State {
-  players: Record<string, Player>;
+  players: Record<string, IPlayable>;
   isPlaying: boolean;
   showDrawer: boolean;
   isFixed: boolean;
@@ -45,7 +41,7 @@ export interface State {
 }
 
 export type PlayerAction =
-  | { type: "SET_PLAYERS"; payload: Record<string, Player> }
+  | { type: "SET_PLAYERS"; payload: Record<string, IPlayable> }
   | { type: "TOGGLE_PLAYING"; payload: boolean }
   | { type: "OPEN_DRAWER" } 
   | { type: "CLOSE_DRAWER" } 

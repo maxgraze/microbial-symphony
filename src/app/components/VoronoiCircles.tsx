@@ -1,13 +1,19 @@
 "use client";
-import React, { memo, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  memo,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import * as d3 from "d3";
 import { fills } from "../lib/styles/fills";
 import { voronoiTreemap } from "d3-voronoi-treemap";
 import { PlayerContext } from "../lib/PlayerContext";
-import { Player, NoisePlayer } from "../lib/Classes";
 import * as Tone from "tone";
 import { motion } from "framer-motion";
-import { IPlayable } from "../lib/types";
+import type { IPlayable } from "../lib/types";
 interface VoronoiProps {
   data: any;
   circlePolygon: any;
@@ -22,6 +28,15 @@ interface VoronoiNode extends d3.HierarchyNode<any> {
   polygon: [number, number][];
 }
 
+function determineFill(d: { data: { type: string }; depth: number }) {
+  if (d.data.type && d.depth > 0) {
+    return d.data.type === "other"
+      ? "#b9b9b9"
+      : `url(#${d.data.type.replace(/\s+/g, "_")})`;
+  }
+  return d.data.type === "other" ? "grey" : "yellow";
+}
+
 const Voronoi: React.FC<VoronoiProps> = ({
   data,
   circlePolygon,
@@ -32,31 +47,16 @@ const Voronoi: React.FC<VoronoiProps> = ({
 }) => {
   const [activeNode, setActiveNode] = useState<VoronoiNode | null>(null);
   const ref = useRef<SVGSVGElement | null>(null);
-  const { state, dispatch } = useContext(PlayerContext); // Access state and dispatch from context
+  const { state } = useContext(PlayerContext);
   const { players } = state;
 
-  const playingSynths = useRef<any[]>([]);
+  const playersLoaded = Object.keys(players).length > 0;
 
-  const [playersLoaded, setPlayersLoaded] = useState(false);
-  useEffect(() => {
-    if (players && Object.keys(players).length > 0) {
-      setPlayersLoaded(true);
-    }
+  const stopAllSynths = useCallback(() => {
+    Object.values(players).forEach((player) => player.stop());
   }, [players]);
 
-  const stopAllSynths = () => {
-    playingSynths.current.forEach((player) => {
-      if (player instanceof Player) {
-        player.stop();
-      } else if (player instanceof NoisePlayer) {
-        player.stop();
-      }
-    });
-    playingSynths.current.length = 0;
-  };
-
-  const onStartClick = async (d: VoronoiNode) => {
-    // if (!playersLoaded || typeof window === "undefined") {
+  const onStartClick = useCallback(async (d: VoronoiNode) => {
     if (!state.isPlaying || !playersLoaded || typeof window === "undefined") {
       return;
     }
@@ -77,10 +77,13 @@ const Voronoi: React.FC<VoronoiProps> = ({
       }
     }
 
-    const startTime = Tone.now() + 0.1;
+    if (Tone.Transport.state !== "started") {
+      Tone.Transport.start();
+    }
+    const startTime = Tone.Transport.seconds + 0.05;
 
     const newOrganisms = d.data.children.map((child: { type: string }) =>
-      child.type.replace(/ /g, "_")
+      child.type.toLowerCase().replace(/ /g, "_")
     );
 
     // Stop any currently playing synths before starting new ones
@@ -98,62 +101,39 @@ const Voronoi: React.FC<VoronoiProps> = ({
       .filter(Boolean);
 
     organismSynths.forEach((player: IPlayable) => {
-      playingSynths.current.push(player);
       player.play(startTime);
     });
-  };
-  const handleNodeClick = (
-    event: React.MouseEvent<HTMLElement>,
-    d: VoronoiNode
-  ) => {
-    if (isMobile) {
-      if (activeNode && activeNode.id === d.id) {
-        setActiveNode(null);
-      } else {
-        setActiveNode(d);
+  }, [players, playersLoaded, state.isPlaying, stopAllSynths]);
+  const handleNodeClick = useCallback(
+    (event: React.MouseEvent<HTMLElement>, d: VoronoiNode) => {
+      if (isMobile) {
+        if (activeNode && activeNode.id === d.id) {
+          setActiveNode(null);
+        } else {
+          setActiveNode(d);
+        }
       }
-    }
-  };
+    },
+    [activeNode, isMobile]
+  );
 
   useEffect(() => {
-    stopAllSynths(); // Stop all synths when active node changes
+    stopAllSynths();
     if (activeNode && state.isPlaying) {
-      onStartClick(activeNode); // Start synths only if there is an active node
+      void onStartClick(activeNode);
     }
-  }, [activeNode]);
-
-  // Create VoronoiCreate Voronoi
-  function determineFill(d: { data: { type: string }; depth: number }) {
-    if (d.data.type && d.depth > 0) {
-      return d.data.type == "other"
-        ? "#b9b9b9"
-        : "url(#" + d.data.type.replace(/\s+/g, "_") + ")";
-    } else if (d.data.type && d.data.type == "other") {
-      return "grey";
-    } else {
-      return "yellow";
-    }
-  }
-  useEffect(() => {
-    if (players && Object.keys(players).length > 0 && ref.current) {
-      renderVoronoiDiagram(ref.current, data, players, isPlaying);
-    }
-  }, [players, data, isPlaying, setActiveNode]);
+  }, [activeNode, onStartClick, state.isPlaying, stopAllSynths]);
 
   // Cleanup synths on component unmount
   useEffect(() => {
     return () => {
       stopAllSynths();
     };
-  }, []);
+  }, [stopAllSynths]);
 
-  const renderVoronoiDiagram = (
-    container: SVGSVGElement,
-    data: any,
-    players: any,
-    isPlaying: boolean
-  ) => {
-    if (players && Object.keys(players).length > 0 && ref.current) {
+  const renderVoronoiDiagram = useCallback(
+    (data: any, players: any, isPlaying: boolean) => {
+      if (players && Object.keys(players).length > 0 && ref.current) {
       d3.select(ref.current).selectAll("*").remove();
       const svg = d3.select(ref.current);
       let margin = legend ? 4 : 10;
@@ -230,8 +210,16 @@ const Voronoi: React.FC<VoronoiProps> = ({
           .attr("class", "node-text")
           .attr("text-anchor", "middle")
           .attr("font-family", "Figtree");
+      }
+    },
+    [circlePolygon, handleNodeClick, legend, onStartClick, stopAllSynths, wh]
+  );
+
+  useEffect(() => {
+    if (playersLoaded && ref.current) {
+      renderVoronoiDiagram(data, players, isPlaying);
     }
-  };
+  }, [data, isPlaying, players, playersLoaded, renderVoronoiDiagram]);
 
   return (
     <>

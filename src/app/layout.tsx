@@ -1,9 +1,18 @@
-"use client";
-
 import "./globals.css";
+import type { Metadata, Viewport } from "next";
 import React from "react";
-import Head from "next/head";
 import { PlayerProvider } from "./lib/PlayerContext";
+
+export const metadata: Metadata = {
+  title: "Microbial Symphony",
+  description:
+    "Hear the combinations of microorganisms found in fermented foods.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
 export default function RootLayout({
   children,
@@ -12,13 +21,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <Head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <head>
         <link rel="stylesheet" href="https://use.typekit.net/zur3vau.css" />
-      </Head>
-      <PlayerProvider>
-        <body>{children}</body>
-      </PlayerProvider>
+      </head>
+      <body>
+        <PlayerProvider>{children}</PlayerProvider>
+      </body>
     </html>
   );
 }

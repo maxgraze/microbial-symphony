@@ -40,7 +40,7 @@ export default function Home() {
   const { data } = useFetchData();
   const { state, dispatch } = useContext(PlayerContext);
 
-  const { activeItem, displayData, isPlaying } = state;
+  const { activeItem, displayData, isPlaying, players } = state;
 
   const filteredData = useMemo(() => {
     if (!activeItem) return data;
@@ -84,17 +84,12 @@ export default function Home() {
   const closeDrawer = () => dispatch({ type: "CLOSE_DRAWER" });
 
   const handleEnableSound = async () => {
-    if (isMobile) {
-      alert(
-        "If you are on an iPhone, set your phone to ring in order to allow sound."
-      );
-    }
-
     if (Tone.context.state !== "running") {
       try {
         await Tone.start();
       } catch (error) {
         console.error("Failed to start audio:", error);
+        return;
       }
     }
     dispatch({ type: "TOGGLE_PLAYING", payload: true });
@@ -108,11 +103,14 @@ export default function Home() {
 
   useEffect(() => {
     if (state.isPlaying) {
-      Tone.Transport.start();
+      if (Tone.Transport.state !== "started") {
+        Tone.Transport.start();
+      }
     } else {
+      Object.values(players).forEach((player) => player.stop());
       Tone.Transport.stop();
     }
-  }, [state.isPlaying]);
+  }, [players, state.isPlaying]);
 
   if (state.isLoading) {
     return (
